@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lanternfish",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "dist/public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/e", "/s", "/api/*", "/p/*"]
+  },
+  // No database_id: Wrangler provisions the database on first deploy.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "lanternfish", "migrations_dir": "migrations" }
+  ],
+  "triggers": { "crons": ["10 * * * *"] },
+  "vars": {
+    "RETENTION_DAYS": "90",
+    "DAILY_WRITE_BUDGET": "95000",
+    "DAILY_READ_BUDGET": "4000000"
+  },
+  "observability": { "enabled": true }
+}
