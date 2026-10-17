@@ -176,7 +176,7 @@ components:
 
 Lanternfish reads like a departures board printed on paper: a visible 12-column grid, flush-left type, and numbers that line up in tabular columns. Every screen leads with a figure. Structure comes from 1px hairlines and the drawn column grid, never from boxes, so the page stays a single continuous sheet rather than a wall of tiles.
 
-The palette is paper and ink with one Swiss red. Red marks exactly what is current: the live series, the selected tab, the focused field, the primary action, the length of a ranked bar. Grey ink carries the previous period. Light and dark follow the system setting with the same roles unless the lantern switch in the band pins one; in dark the paper becomes night ink and the red brightens. Every color token is a `light-dark()` pair, so a theme is only a `color-scheme`.
+The palette is paper and ink with one Swiss red. Red marks exactly what is current: the live series, the selected tab, the focused field, the primary action, the length of a ranked bar. Grey ink carries the previous period. Light and dark follow the system setting with the same roles unless the lantern switch in the band pins one; in dark the paper becomes night ink and the red brightens. Every color token is a `light-dark()` pair, so a theme is only a `color-scheme`. From 1600px wide the whole sheet scales by `zoom` (1.125, then 1.25 from 2200px), so type, spacing, controls and the 1440px page grow together on large monitors.
 
 Density is high but calm. Type is one family, Geist, at a ~1.2 ratio, set tight at the large sizes and sentence case everywhere. Motion is short state change, not choreography.
 

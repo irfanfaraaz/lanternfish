@@ -54,6 +54,8 @@
   --page: 1440px;
   --margin: 32px;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --zoom: 1;
 }
 
 /* The theme switch pins a scheme; without it the system setting wins. */
@@ -70,5 +72,18 @@
     --cols: 4;
     --gutter: 16px;
     --margin: 16px;
+  }
+}
+
+/* Large monitors: scale the sheet up so 13px rows don't read as 11px from arm's length. */
+@media (min-width: 1600px) {
+  :root {
+    --zoom: 1.125;
+  }
+}
+
+@media (min-width: 2200px) {
+  :root {
+    --zoom: 1.25;
   }
 }

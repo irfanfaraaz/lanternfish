@@ -11,16 +11,19 @@
 html {
   background: var(--paper);
   color: var(--ink);
-  font: 400 var(--t-md) / 1.5 var(--font);
   font-feature-settings: "ss01", "tnum";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   scrollbar-color: var(--rule) transparent;
 }
 
+/* Font size lives on body: on html it would shrink every rem with it. */
 body {
   margin: 0;
-  min-height: 100dvh;
+  font: 400 var(--t-md) / 1.5 var(--font);
+  /* Wide screens scale the whole sheet (type, space, controls, page width) as one. */
+  zoom: var(--zoom);
+  min-height: calc(100dvh / var(--zoom));
 }
 
 ::selection {
@@ -1222,7 +1225,7 @@ a.sites-row:hover .site-name {
 /* ---------- Login ---------- */
 
 .login {
-  min-height: 100dvh;
+  min-height: calc(100dvh / var(--zoom));
   align-content: center;
   padding: var(--s-7) var(--margin);
   max-width: var(--page);
