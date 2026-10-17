@@ -4,11 +4,11 @@ import nextHelper from "../../../snippets/nextjs/lib/lanternfish.ts?raw";
 import nextProxy from "../../../snippets/nextjs/proxy.ts?raw";
 import nextRouteHandler from "../../../snippets/nextjs/route-handler.ts?raw";
 import nextRoute from "../../../snippets/nextjs/app/api/e/route.ts?raw";
-import { ATTRIBUTES, GENERIC_PROXY, curlServerEvent, envBlock, scriptTag } from "../../shared/snippets";
+import { ATTRIBUTES, GENERIC_PROXY, NEXT_PACKAGE, curlServerEvent, envBlock, scriptTag } from "../../shared/snippets";
 import type { Site, SiteInput } from "../../shared/types";
 import { api, useApi } from "../api";
 import { Shell } from "../components/Shell";
-import { CopyButton, ErrorLine, Section, Skeleton, Snippet } from "../components/ui";
+import { CopyButton, Disclosure, ErrorLine, Section, Skeleton, Snippet } from "../components/ui";
 import { addDays, todayIn } from "../format";
 import { Download } from "../icons";
 
@@ -121,34 +121,15 @@ function SiteForm({ site, onSaved }: { site?: Site; onSaved: (s: Site) => void }
 
 function Snippets({ site }: { site: Site }) {
   const origin = location.origin;
+  const env = (key: string) => envBlock(origin, site.id, key);
   return (
     <>
-      <Snippet title="Script tag" code={scriptTag(origin, site.id, false)}>
-        Paste into the <code>&lt;head&gt;</code> of every page. Works on any site.
+      <Snippet title="Add this line" code={scriptTag(origin, site.id, false)}>
+        Paste it into the <code>&lt;head&gt;</code> of every page, on any site. That's the whole setup: visits, referrers, countries, time on page, outbound clicks and Web Vitals start
+        counting within seconds.
       </Snippet>
-      <Snippet title="Script tag through your own domain" code={scriptTag(origin, site.id, true)}>
-        Use this with the Next.js proxy route below so ad blockers see a first-party request.
-      </Snippet>
-      <Snippet title="Environment variables (Next.js)" code={envBlock(origin, site.id)}>
-        Add these to your Next.js project. The server key is below.
-      </Snippet>
-      <Snippet title="lib/lanternfish.ts" code={nextHelper}>
-        Shared helpers for the proxy route and agent logging.
-      </Snippet>
-      <Snippet title="app/api/e/route.ts" code={nextRoute}>
-        Forwards tracker beacons to Lanternfish with a signed header.
-      </Snippet>
-      <Snippet title="proxy.ts" code={nextProxy}>
-        Logs AI agents and crawlers. Runs only for known bot user agents and never delays the response.
-      </Snippet>
-      <Snippet title="Route handler, without proxy.ts" code={nextRouteHandler}>
-        One line for a single file such as llms.txt. Skip it if you use proxy.ts.
-      </Snippet>
-      <Snippet title="Any other backend" code={`${GENERIC_PROXY}\n\nServer events:\n${curlServerEvent(origin, site.id)}`} />
-      <div class="snippet">
-        <div class="snippet-head">
-          <h3>Tracking attributes</h3>
-        </div>
+
+      <Disclosure title="Track sections and clicks" hint="HTML attributes, no code">
         <table class="table">
           <tbody>
             {ATTRIBUTES.map(([code, what]) => (
@@ -161,7 +142,47 @@ function Snippets({ site }: { site: Site }) {
             ))}
           </tbody>
         </table>
-      </div>
+      </Disclosure>
+
+      <Disclosure title="Next.js: get past ad blockers and log AI agents" hint="Optional">
+        <p class="note">
+          Use this instead of the line above, not as well, or each visit counts twice. Events go through your own domain, so ad blockers let them through, and your server logs
+          crawlers that never run JavaScript.
+        </p>
+        <Snippet title="1. Install" code={NEXT_PACKAGE.install} />
+        <Snippet title="2. .env.local" code={env("•".repeat(16))} copy={env(site.server_key)}>
+          Copy includes this site's server key. Keep it out of client code.
+        </Snippet>
+        <Snippet title="3. app/layout.tsx" code={NEXT_PACKAGE.layout}>
+          Add <code>&lt;Lanternfish /&gt;</code> to your root layout.
+        </Snippet>
+        <Snippet title="4. app/api/e/route.ts" code={NEXT_PACKAGE.route}>
+          The whole file.
+        </Snippet>
+        <Snippet title="5. proxy.ts, for AI agents" code={NEXT_PACKAGE.proxy}>
+          Optional. At the project root; on Next 15 name it <code>middleware.ts</code> and export <code>middleware</code>. Already have one? Call <code>logAgent(req)</code> from it.
+        </Snippet>
+      </Disclosure>
+
+      <Disclosure title="Without the package" hint="Copy the files, or any other backend">
+        <Snippet title="Script tag through your own domain" code={scriptTag(origin, site.id, true)}>
+          Use this with the proxy route below.
+        </Snippet>
+        <Snippet title="Environment variables" code={env("<your server key>")} />
+        <Snippet title="lib/lanternfish.ts" code={nextHelper}>
+          Shared helpers for the proxy route and agent logging.
+        </Snippet>
+        <Snippet title="app/api/e/route.ts" code={nextRoute}>
+          Forwards tracker beacons to Lanternfish with a signed header.
+        </Snippet>
+        <Snippet title="proxy.ts" code={nextProxy}>
+          Logs AI agents and crawlers. Runs only for known bot user agents and never delays the response.
+        </Snippet>
+        <Snippet title="Route handler, without proxy.ts" code={nextRouteHandler}>
+          One line for a single file such as llms.txt. Skip it if you use proxy.ts.
+        </Snippet>
+        <Snippet title="Any other backend" code={`${GENERIC_PROXY}\n\nServer events:\n${curlServerEvent(origin, site.id)}`} />
+      </Disclosure>
     </>
   );
 }
@@ -339,14 +360,14 @@ export function Settings({ id }: { id: string }) {
       <div class="head grid">
         <div class="span-7">
           <h1>{site.data?.name ?? " "}</h1>
-          <p class="sub">{fresh ? "Site added. Copy the script tag below into your site to start counting." : "Settings"}</p>
+          <p class="sub">{fresh ? "Site added. Add the line below to your site to start counting." : "Settings"}</p>
         </div>
       </div>
       {site.error && <ErrorLine message={site.error} retry={site.reload} />}
       {!site.data && !site.error && <Skeleton lines={6} />}
       {site.data && (
         <div class="grid">
-          <Section title={fresh ? "Install" : "Install snippets"} span={7}>
+          <Section title="Install" span={7}>
             <Snippets site={site.data} />
           </Section>
           <div class="span-5" style={{ display: "grid", alignContent: "start" }}>

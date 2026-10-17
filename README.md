@@ -77,6 +77,35 @@ In the dashboard choose **Add site**, enter its name and domains, and paste the 
 
 Events from any domain not listed for the site are dropped. Use `*.example.com` to allow every subdomain.
 
+That one line is the whole setup. Everything below is optional.
+
+### Next.js
+
+[`lanternfish-next`](packages/next) adds the tracker, sends events through your own domain (past ad blockers) and logs AI agents, with no files to copy:
+
+```sh
+npm install lanternfish-next
+```
+
+```tsx
+// app/layout.tsx: inside <body>, instead of the script tag
+import { Lanternfish } from "lanternfish-next";
+<Lanternfish />
+```
+
+```ts
+// app/api/e/route.ts
+export { POST } from "lanternfish-next";
+```
+
+```ts
+// proxy.ts (middleware.ts on Next 15), optional: logs AI agents
+export { proxy } from "lanternfish-next/proxy";
+export const config = { matcher: "/((?!_next/|favicon.ico).*)" };
+```
+
+Set `LF_ORIGIN`, `LF_SITE` and `LF_SERVER_KEY`; the dashboard's Settings page has them ready to copy. See the [package README](packages/next/README.md) for options.
+
 ### Tracking attributes
 
 No JavaScript needed for any of these:
@@ -98,7 +127,7 @@ Event names use lowercase letters, digits, `_` and `:`, up to 40 characters. Eac
 
 Some ad blockers drop requests to a third-party analytics host. To send events through your own domain instead, serve `/api/e` on your site and forward it to the Worker with signed headers. The dashboard's Settings page shows each snippet with your site's values filled in.
 
-**Next.js:** copy `snippets/nextjs/lib/lanternfish.ts` and `snippets/nextjs/app/api/e/route.ts`, set `LF_ORIGIN`, `LF_SITE` and `LF_SERVER_KEY`, and add `data-api="/api/e"` to the script tag.
+**Next.js:** use [`lanternfish-next`](#nextjs). To copy files instead: `snippets/nextjs/lib/lanternfish.ts` and `snippets/nextjs/app/api/e/route.ts`, set `LF_ORIGIN`, `LF_SITE` and `LF_SERVER_KEY`, and add `data-api="/api/e"` to the script tag.
 
 **Any backend:** forward the body unchanged to `<worker>/e` with these headers, and answer the browser with `204`:
 
@@ -117,7 +146,7 @@ Signatures older than five minutes are rejected.
 
 Bots don't run the tracker, so log them from your server.
 
-**Next.js:** copy `snippets/nextjs/proxy.ts` (Next 16's middleware). Its matcher only fires for known bot user agents, and `after()` sends the event once the response is on its way. Without a proxy, add the one line from `snippets/nextjs/route-handler.ts` to individual route handlers such as `llms.txt`. Don't use both, or each fetch counts twice.
+**Next.js:** use [`lanternfish-next`](#nextjs)'s proxy, or copy `snippets/nextjs/proxy.ts` (Next 16's middleware). Its matcher only fires for known bot user agents, and `after()` sends the event once the response is on its way. Without a proxy, add the one line from `snippets/nextjs/route-handler.ts` to individual route handlers such as `llms.txt`. Don't use both, or each fetch counts twice.
 
 **Anything else:**
 
@@ -169,6 +198,7 @@ bunx wrangler d1 migrations apply lanternfish --local
 bun run build && bun run dev     # Worker and dashboard on :8787
 bun run test                     # Worker tests in the Workers runtime
 bun run typecheck
+bun run build:next               # builds packages/next (lanternfish-next) into its dist/
 ```
 
 ## Licence

@@ -12,7 +12,8 @@
     "setup": "bun scripts/setup.ts",
     "hash-password": "bun scripts/hash-password.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:next": "bun scripts/build-next.ts"
   },
   "dependencies": {
     "hono": "4.13.13"

@@ -5,9 +5,29 @@ export function scriptTag(workerOrigin: string, siteId: string, proxied: boolean
   return `<script defer src="${workerOrigin}/lf.js" data-site="${siteId}"${api}></script>`;
 }
 
-export function envBlock(workerOrigin: string, siteId: string): string {
-  return [`LF_ORIGIN=${workerOrigin}`, `LF_SITE=${siteId}`, "LF_SERVER_KEY=<your server key>"].join("\n");
+export function envBlock(workerOrigin: string, siteId: string, serverKey = "<your server key>"): string {
+  return [`LF_ORIGIN=${workerOrigin}`, `LF_SITE=${siteId}`, `LF_SERVER_KEY=${serverKey}`].join("\n");
 }
+
+/** The lanternfish-next setup, step by step. */
+export const NEXT_PACKAGE = {
+  install: "npm install lanternfish-next",
+  layout: `import { Lanternfish } from "lanternfish-next";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+        <Lanternfish />
+      </body>
+    </html>
+  );
+}`,
+  route: `export { POST } from "lanternfish-next";`,
+  proxy: `export { proxy } from "lanternfish-next/proxy";
+export const config = { matcher: "/((?!_next/|favicon.ico).*)" };`,
+} as const;
 
 export function curlServerEvent(workerOrigin: string, siteId: string): string {
   return [

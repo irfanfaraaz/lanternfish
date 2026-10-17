@@ -1193,6 +1193,71 @@ a.sites-row:hover .site-name {
   tab-size: 2;
 }
 
+/* Optional install steps, folded under a hairline. The plus turns to a cross when open. */
+.disclosure {
+  border-bottom: 1px solid var(--rule);
+}
+
+.disclosure summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-3);
+  min-height: 48px;
+  padding: var(--s-3) 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure summary svg {
+  flex: none;
+  align-self: center;
+  width: 14px;
+  height: 14px;
+  color: var(--red);
+  transition: transform 150ms var(--ease);
+}
+
+.disclosure[open] summary svg {
+  transform: rotate(45deg);
+}
+
+.disclosure-title {
+  font-size: var(--t-sm);
+  font-weight: 650;
+}
+
+.disclosure summary:hover .disclosure-title {
+  text-decoration: underline;
+  text-decoration-color: var(--red);
+  text-decoration-thickness: 2px;
+}
+
+.disclosure-hint {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.disclosure-body {
+  display: grid;
+  gap: var(--s-2);
+  padding: 0 0 var(--s-4) calc(14px + var(--s-3));
+}
+
+.disclosure-body .snippet:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 760px) {
+  .disclosure-body {
+    padding-left: 0;
+  }
+}
+
 .keybox {
   display: flex;
   align-items: center;

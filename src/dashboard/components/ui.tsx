@@ -1,6 +1,6 @@
 import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
-import { Check, Copy } from "../icons";
+import { Check, Copy, Plus } from "../icons";
 
 export function Section({ title, meta, span = 6, children, id }: { title: string; meta?: ComponentChildren; span?: 3 | 4 | 5 | 6 | 7 | 8 | 12; children: ComponentChildren; id?: string }) {
   const hid = id ?? `h-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
@@ -34,12 +34,13 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
   );
 }
 
-export function Snippet({ title, code, children }: { title: string; code: string; children?: ComponentChildren }) {
+/** A titled code block. `copy` overrides what the button copies, so a secret can be shown masked. */
+export function Snippet({ title, code, copy, children }: { title: string; code: string; copy?: string; children?: ComponentChildren }) {
   return (
     <div class="snippet">
       <div class="snippet-head">
         <h3>{title}</h3>
-        <CopyButton text={code} />
+        <CopyButton text={copy ?? code} />
       </div>
       {children && <p>{children}</p>}
       <pre>
@@ -69,5 +70,19 @@ export function ErrorLine({ message, retry }: { message: string; retry?: () => v
         </button>
       )}
     </p>
+  );
+}
+
+/** A folded group of optional steps. Closed by default. */
+export function Disclosure({ title, hint, children }: { title: string; hint?: string; children: ComponentChildren }) {
+  return (
+    <details class="disclosure">
+      <summary>
+        <Plus />
+        <span class="disclosure-title">{title}</span>
+        {hint && <span class="disclosure-hint">{hint}</span>}
+      </summary>
+      <div class="disclosure-body">{children}</div>
+    </details>
   );
 }

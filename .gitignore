@@ -3,3 +3,5 @@ dist
 .wrangler
 .dev.vars
 .scratch
+packages/next/dist
+packages/next/LICENSE

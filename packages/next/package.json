@@ -1,0 +1,20 @@
+{
+  "name": "lanternfish-next",
+  "version": "0.1.0",
+  "description": "Lanternfish analytics for Next.js: the tracker tag, an ad-blocker-proof proxy route and AI-agent logging.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "repository": { "type": "git", "url": "git+https://github.com/irfanfaraaz/lanternfish.git", "directory": "packages/next" },
+  "homepage": "https://github.com/irfanfaraaz/lanternfish/tree/main/packages/next#readme",
+  "keywords": ["analytics", "nextjs", "privacy", "cookieless", "cloudflare"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./proxy": { "types": "./dist/proxy.d.ts", "default": "./dist/proxy.js" }
+  },
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
+  "peerDependencies": {
+    "next": ">=15.1.0",
+    "react": ">=18"
+  }
+}
