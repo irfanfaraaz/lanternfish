@@ -1,10 +1,16 @@
 # Lanternfish
 
-Cookieless web analytics you host yourself on Cloudflare's free tier. One dashboard for any number of sites.
+[![CI](https://github.com/irfanfaraaz/lanternfish/actions/workflows/ci.yml/badge.svg)](https://github.com/irfanfaraaz/lanternfish/actions/workflows/ci.yml)
+[![lanternfish-next on npm](https://img.shields.io/npm/v/lanternfish-next?label=lanternfish-next)](https://www.npmjs.com/package/lanternfish-next)
+[![Licence: AGPL-3.0](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
+
+Cookieless web analytics you host yourself on Cloudflare's free tier. One dashboard for any number of sites, no cookie banner, no bill.
 
 A lanternfish is a deep-sea fish that makes its own light.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/irfanfaraaz/lanternfish)
+
+**Contents:** [What it tells you](#what-it-tells-you) · [Privacy](#privacy) · [Deploy](#deploy) · [Add a site](#add-a-site) · [Next.js](#nextjs) · [AI agents](#ai-agents-and-crawlers) · [Free-tier budget](#free-tier-budget) · [Configuration](#configuration) · [Development](#development)
 
 ## What it tells you
 
@@ -200,6 +206,10 @@ bun run test                     # Worker tests in the Workers runtime
 bun run typecheck
 bun run build:next               # builds packages/next (lanternfish-next) into its dist/
 ```
+
+## Contributing
+
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first; report security problems privately as described in [SECURITY.md](SECURITY.md). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## Licence
 

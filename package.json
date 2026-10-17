@@ -3,6 +3,24 @@
   "version": "0.1.0",
   "description": "Cookieless, self-hosted web analytics on Cloudflare's free tier.",
   "license": "AGPL-3.0-only",
+  "author": "Irfan Faraz (https://github.com/irfanfaraaz)",
+  "homepage": "https://github.com/irfanfaraaz/lanternfish#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/irfanfaraaz/lanternfish.git"
+  },
+  "bugs": {
+    "url": "https://github.com/irfanfaraaz/lanternfish/issues"
+  },
+  "keywords": [
+    "analytics",
+    "privacy",
+    "cookieless",
+    "cloudflare-workers",
+    "d1",
+    "self-hosted",
+    "web-analytics"
+  ],
   "private": true,
   "type": "module",
   "scripts": {

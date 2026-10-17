@@ -1,0 +1,22 @@
+name: Feature request
+description: Suggest something Lanternfish should do.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to find out or do that Lanternfish doesn't support?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you'd like
+  - type: checkboxes
+    id: limits
+    attributes:
+      label: Constraints
+      options:
+        - label: This works within Cloudflare's free tier (D1 writes are the tightest limit).
+        - label: This needs no cookies and stores no personal data.
