@@ -31,6 +31,7 @@ function SiteForm({ site, onSaved }: { site?: Site; onSaved: (s: Site) => void }
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const tz = site?.timezone ?? browserZone;
 
   const submit = async (e: Event) => {
     e.preventDefault();
@@ -71,9 +72,10 @@ function SiteForm({ site, onSaved }: { site?: Site; onSaved: (s: Site) => void }
       <div class="form-row">
         <div class="field">
           <label for="tz">Timezone</label>
-          <select id="tz" name="timezone" defaultValue={site?.timezone ?? browserZone}>
-            {zones.map((z) => (
-              <option key={z} value={z}>
+          <select id="tz" name="timezone">
+            {/* <select> has no defaultValue, and Chrome lists old names (Asia/Calcutta), so the saved zone may be missing. */}
+            {(zones.includes(tz) ? zones : [tz, ...zones]).map((z) => (
+              <option key={z} value={z} selected={z === tz}>
                 {z}
               </option>
             ))}
