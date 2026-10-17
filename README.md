@@ -139,7 +139,7 @@ All your sites share one Cloudflare account's limits. A typical visit sends abou
 | Workers: 100,000 requests a day | about 30,000 |
 | D1: 100,000 rows written a day | about 1,800 with 90-day retention; about 3,500 with `RETENTION_DAYS=0` |
 | D1: 5,000,000 rows read a day | dashboard use, not visits: rollups keep each view to a few thousand rows |
-| D1: 5 GB storage | well over a year at the write limit |
+| D1: 500 MB per database (5 GB per account) | about 90 days of raw events at the write limit, so 90-day retention sits near the cap; with `RETENTION_DAYS=0` it fills in about 45 days. Lower `RETENTION_DAYS` if usage gets close |
 
 D1 counts each indexed insert as 2 rows written, and deleting old events costs the same again, so writes are the real ceiling. Lanternfish stops storing events once `DAILY_WRITE_BUDGET` (default 95,000) is reached and starts again at 00:00 UTC. Tracked sites keep working, and the dashboard header shows today's usage.
 
