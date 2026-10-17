@@ -1,30 +1,31 @@
-/* Lanternfish: Swiss technical. Paper or night ground, ink, one red. */
+/* Lanternfish: Swiss technical. Paper or night ground, ink, one red.
+   Colors are light-dark() pairs, so a theme is just a color-scheme. */
 :root {
   color-scheme: light dark;
 
-  --paper: #f5f5f2;
-  --paper-2: #ebebe6;
-  --ink: #111110;
-  --ink-2: #4a4a46;
-  --ink-3: #6e6e68;
-  --rule: #d4d4cd;
-  --rule-strong: #111110;
-  --grid: rgb(17 17 16 / 0.06);
-  --red: #e5231b;
-  --red-ink: #b81810;
-  --red-wash: rgb(229 35 27 / 0.1);
+  --paper: light-dark(#f5f5f2, #0f0f0e);
+  --paper-2: light-dark(#ebebe6, #181816);
+  --ink: light-dark(#111110, #ededea);
+  --ink-2: light-dark(#4a4a46, #b4b4ad);
+  --ink-3: light-dark(#6e6e68, #8c8c85);
+  --rule: light-dark(#d4d4cd, #2c2c29);
+  --rule-strong: light-dark(#111110, #ededea);
+  --grid: light-dark(rgb(17 17 16 / 0.06), rgb(237 237 234 / 0.05));
+  --red: light-dark(#e5231b, #ff4a3d);
+  --red-ink: light-dark(#b81810, #ff6b60);
+  --red-wash: light-dark(rgb(229 35 27 / 0.1), rgb(255 74 61 / 0.14));
   /* Filled red under white text: 4.5:1 or better in both themes. */
-  --red-solid: #e01f17;
-  --red-solid-hover: #b81810;
+  --red-solid: light-dark(#e01f17, #cc1a10);
+  --red-solid-hover: light-dark(#b81810, #a8150d);
   --on-red: #ffffff;
-  --band: #111110;
-  --band-rule: #333331;
-  --band-ink: #f5f5f2;
-  --band-ink-2: #a3a39b;
-  --good: #1d7a46;
-  --warn: #9a6200;
-  --bad: #c41a12;
-  --focus: #e5231b;
+  --band: light-dark(#111110, #000);
+  --band-rule: light-dark(#333331, #2c2c29);
+  --band-ink: light-dark(#f5f5f2, #ededea);
+  --band-ink-2: light-dark(#a3a39b, #8c8c85);
+  --good: light-dark(#1d7a46, #4cc27f);
+  --warn: light-dark(#9a6200, #e0a53a);
+  --bad: light-dark(#c41a12, #ff6b60);
+  --focus: light-dark(#e5231b, #ff4a3d);
 
   --font: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
@@ -55,30 +56,13 @@
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #0f0f0e;
-    --paper-2: #181816;
-    --ink: #ededea;
-    --ink-2: #b4b4ad;
-    --ink-3: #8c8c85;
-    --rule: #2c2c29;
-    --rule-strong: #ededea;
-    --grid: rgb(237 237 234 / 0.05);
-    --red: #ff4a3d;
-    --red-ink: #ff6b60;
-    --red-wash: rgb(255 74 61 / 0.14);
-    --red-solid: #cc1a10;
-    --red-solid-hover: #a8150d;
-    --band: #000;
-    --band-rule: #2c2c29;
-    --band-ink: #ededea;
-    --band-ink-2: #8c8c85;
-    --good: #4cc27f;
-    --warn: #e0a53a;
-    --bad: #ff6b60;
-    --focus: #ff4a3d;
-  }
+/* The theme switch pins a scheme; without it the system setting wins. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 @media (max-width: 760px) {

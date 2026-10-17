@@ -58,11 +58,13 @@ export function Sites() {
                 <br />
                 <span class="site-domain">{s.site.domains.join(", ")}</span>
               </span>
-              <span role="cell" class="big" aria-label={`${s.views} views`}>
-                {num(s.views)}
+              <span role="cell" aria-label={`${s.views} views`}>
+                <span class="cell-label" aria-hidden="true">Views</span>
+                <span class="big">{num(s.views)}</span>
               </span>
-              <span role="cell" class="big" aria-label={`${s.uniques} visitors`}>
-                {num(s.uniques)}
+              <span role="cell" aria-label={`${s.uniques} visitors`}>
+                <span class="cell-label" aria-hidden="true">Visitors</span>
+                <span class="big">{num(s.uniques)}</span>
               </span>
               <span role="cell">
                 <Sparkline values={s.spark} />

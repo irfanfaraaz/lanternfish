@@ -40,3 +40,13 @@ export const Download = () => (
     <path d="M8 2.5v8M4.5 7l3.5 3.5L11.5 7M3 13.5h10" />
   </svg>
 );
+
+/** The theme switch: a hanging lantern, dark when off, lit red in dark mode, half lit when it follows the system. */
+export const Lantern = ({ mode }: { mode: "system" | "light" | "dark" }) => (
+  <svg {...base} class={`lantern ${mode}`}>
+    <path d="M8 1v2.5M5.5 3.5h5" />
+    <rect x="4.75" y="5.75" width="6.5" height="7.5" />
+    <rect class="flame" x="5.5" y={mode === "system" ? 9.5 : 6.5} width="5" height={mode === "system" ? 3 : 6} stroke="none" />
+    <path d="M6 15h4" />
+  </svg>
+);

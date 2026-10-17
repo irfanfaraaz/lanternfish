@@ -176,7 +176,7 @@ components:
 
 Lanternfish reads like a departures board printed on paper: a visible 12-column grid, flush-left type, and numbers that line up in tabular columns. Every screen leads with a figure. Structure comes from 1px hairlines and the drawn column grid, never from boxes, so the page stays a single continuous sheet rather than a wall of tiles.
 
-The palette is paper and ink with one Swiss red. Red marks exactly what is current: the live series, the selected tab, the focused field, the primary action, the length of a ranked bar. Grey ink carries the previous period. Light and dark follow the system setting with the same roles; in dark the paper becomes night ink and the red brightens.
+The palette is paper and ink with one Swiss red. Red marks exactly what is current: the live series, the selected tab, the focused field, the primary action, the length of a ranked bar. Grey ink carries the previous period. Light and dark follow the system setting with the same roles unless the lantern switch in the band pins one; in dark the paper becomes night ink and the red brightens. Every color token is a `light-dark()` pair, so a theme is only a `color-scheme`.
 
 Density is high but calm. Type is one family, Geist, at a ~1.2 ratio, set tight at the large sizes and sentence case everywhere. Motion is short state change, not choreography.
 
@@ -228,7 +228,7 @@ Warm-neutral paper and ink (hue ~107, near zero chroma) with a single saturated 
 
 ### Status
 
-- **Good** (`good`), **Warn** (`warn`), **Bad** (`bad`): deltas, Web Vitals ratings, messages, the danger button and the danger-zone rule. Dark #4cc27f, #e0a53a, #ff6b60. Bad sits near red in hue; it is reserved for errors and destructive actions and is always paired with words.
+- **Good** (`good`), **Warn** (`warn`), **Bad** (`bad`): deltas, Web Vitals ratings (each also marked by shape: filled square, hollow square, bar), the usage meter (warn from 60%, red from 80%), messages, the danger button and the danger-zone rule. Dark #4cc27f, #e0a53a, #ff6b60. Bad sits near red in hue; it is reserved for errors and destructive actions and is always paired with words.
 
 ### Named Rules
 
@@ -342,7 +342,7 @@ Active filters. An ink block with paper text, 30px tall, the dimension name at 7
 
 ### Navigation
 
-The black band: 52px, wordmark at 700 with the mark at 18px, a site switcher set off by a left rule, tabs at body-small 500 in band grey. Hover brings band ink; the current tab is band ink with a 2px red underline. Below 760px the tabs wrap to their own scrolling row at 40px and the usage meter hides.
+The black band: 52px, wordmark at 700 with the mark at 18px, a site switcher set off by a left rule, tabs at body-small 500 in band grey. Hover brings band ink; the current tab is band ink with a 2px red underline. The theme switch is a 40px lantern icon before Sign out: unlit outline in light, lit red in dark, half lit on system. Below 760px the wordmark keeps only its mark, the site switcher fills the first row, the tabs wrap to their own scrolling row at 44px under a band rule, and the usage meter hides.
 
 ### Figure band
 

@@ -7,6 +7,13 @@
     <meta name="color-scheme" content="light dark" />
     <title>Lanternfish</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      // Apply a saved theme before first paint, so the page never flashes the other one.
+      try {
+        var t = localStorage.getItem("lf-theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="app"></div>

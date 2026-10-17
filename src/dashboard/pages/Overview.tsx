@@ -35,7 +35,7 @@ function Vital({ metric, value }: { metric: keyof typeof THRESHOLDS; value: numb
   return (
     <td class="r">
       <span class={`rating ${rating}`} title={words}>
-        {metric === "cls" ? value.toFixed(2) : `${num(Math.round(value))} ms`}
+        {metric === "cls" ? value.toFixed(2) : num(Math.round(value))}
       </span>
       <span class="sr-only"> ({words})</span>
     </td>
@@ -222,10 +222,10 @@ export function Overview({ id, shareMode = false }: { id: string; shareMode?: bo
                     <tr>
                       <th scope="col">Page</th>
                       <th scope="col" class="r">
-                        LCP
+                        LCP <span class="unit">ms</span>
                       </th>
                       <th scope="col" class="r">
-                        INP
+                        INP <span class="unit">ms</span>
                       </th>
                       <th scope="col" class="r">
                         CLS
@@ -245,6 +245,11 @@ export function Overview({ id, shareMode = false }: { id: string; shareMode?: bo
                     ))}
                   </tbody>
                 </table>
+                <p class="vitals-key" aria-hidden="true">
+                  <span class="rating good">Good</span>
+                  <span class="rating warn">Needs work</span>
+                  <span class="rating bad">Poor</span>
+                </p>
               </div>
             ) : (
               <p class="empty">Vitals arrive when visitors leave a page. Check back after some traffic.</p>

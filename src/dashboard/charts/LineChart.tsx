@@ -3,7 +3,7 @@ import type { SeriesPoint } from "../../shared/types";
 import { longDay, num, shortDay } from "../format";
 
 const H = 240;
-const PAD_TOP = 8;
+const PAD_TOP = 20;
 const PAD_BOTTOM = 24;
 
 function niceMax(v: number): number {

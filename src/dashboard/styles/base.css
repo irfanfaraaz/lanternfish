@@ -155,6 +155,10 @@ kbd,
   list-style: none;
 }
 
+.tabs li {
+  display: flex;
+}
+
 .tabs a {
   display: flex;
   align-items: center;
@@ -180,15 +184,34 @@ kbd,
   flex: 1;
 }
 
-.band select {
-  background: transparent;
-  border: 0;
+.band-nav {
+  display: flex;
+}
+
+.site-switch {
+  display: flex;
+  align-items: stretch;
   border-left: 1px solid var(--band-rule);
-  padding: 0 var(--s-3);
+}
+
+.band select {
+  appearance: none;
+  max-width: 24ch;
+  min-height: 44px;
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a3a39b' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right var(--s-3) center / 10px 6px;
+  border: 0;
+  border-radius: 0;
+  padding: 0 calc(var(--s-3) * 2 + 10px) 0 var(--s-3);
   color: var(--band-ink);
   font-size: var(--t-sm);
   font-weight: 600;
+  text-overflow: ellipsis;
   cursor: pointer;
+  transition: background-color 150ms var(--ease);
+}
+
+.band select:hover {
+  background-color: var(--band-rule);
 }
 
 .band select option {
@@ -196,23 +219,80 @@ kbd,
   color: var(--ink);
 }
 
+.band-icon,
 .band .linkish {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  min-height: 40px;
+  border: 0;
+  background: none;
   color: var(--band-ink-2);
   font-size: var(--t-sm);
+  cursor: pointer;
+  transition: color 150ms var(--ease);
+}
+
+.band-icon {
+  width: 40px;
+}
+
+.band-icon:hover,
+.band .linkish:hover {
+  color: var(--band-ink);
+}
+
+/* The lantern: unlit outline in light, lit red in dark, half lit on system. */
+.lantern .flame {
+  fill: var(--red);
+  opacity: 0;
+  transition: opacity 150ms var(--ease);
+}
+
+.lantern.dark .flame,
+.lantern.system .flame {
+  opacity: 1;
 }
 
 @media (max-width: 760px) {
   .band-inner {
     flex-wrap: wrap;
-    gap: 0 var(--s-3);
+    gap: 0 var(--s-2);
   }
-  .tabs {
-    order: 3;
+  .wordmark-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .wordmark {
+    min-height: 52px;
+  }
+  .site-switch {
+    min-width: 0;
+    flex: 1 1 0;
+  }
+  .band select {
     width: 100%;
+    max-width: none;
+  }
+  .site-switch ~ .band-spacer {
+    display: none;
+  }
+  .band-nav {
+    order: 3;
+    flex-basis: 100%;
+    border-top: 1px solid var(--band-rule);
     overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs li:first-child a {
+    margin-left: calc(var(--s-3) * -1);
   }
   .tabs a {
-    min-height: 40px;
+    min-height: 44px;
   }
   .band .usage {
     display: none;
@@ -240,6 +320,11 @@ kbd,
   position: absolute;
   inset: 0 auto 0 0;
   background: var(--band-ink);
+}
+
+/* Amber from 60%, red from 80%: room to act before ingest pauses. */
+.usage-bar.warm > span {
+  background: var(--warn);
 }
 
 .usage-bar.high > span {
@@ -684,6 +769,7 @@ kbd,
 .table .r {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .table .path {
@@ -697,8 +783,49 @@ kbd,
   overflow-x: auto;
 }
 
+.table th .unit {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+@media (max-width: 760px) {
+  .table .path {
+    max-width: 16ch;
+  }
+}
+
 .rating {
   font-weight: 600;
+}
+
+/* A square for good, a hollow square for needs work, a cross bar for poor: the rating reads without color. */
+.rating::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  vertical-align: 0.05em;
+  border: 1.5px solid currentColor;
+}
+
+.rating.good::before {
+  background: currentColor;
+}
+
+.rating.bad::before {
+  height: 0;
+  border-width: 1.5px 0 0;
+  vertical-align: 0.3em;
+}
+
+.vitals-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-4);
+  padding-top: var(--s-2);
+  font-size: var(--t-xs);
+  color: var(--ink-3);
 }
 
 .rating.good { color: var(--good); }
@@ -722,6 +849,11 @@ kbd,
   font-size: var(--t-xs);
   fill: var(--ink-3);
   font-variant-numeric: tabular-nums;
+  /* A paper halo keeps tick labels readable where a line crosses them. */
+  stroke: var(--paper);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  paint-order: stroke;
 }
 
 .chart .line-cur {
@@ -951,6 +1083,22 @@ a.sites-row:hover .site-name {
   }
   .sites-row.headrow {
     display: none;
+  }
+  .cell-label {
+    display: block;
+    font-size: var(--t-xs);
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+}
+
+@media (min-width: 761px) {
+  .cell-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
   }
 }
 
