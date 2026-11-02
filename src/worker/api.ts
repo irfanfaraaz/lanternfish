@@ -1,16 +1,18 @@
 import { type Context, Hono } from "hono";
 import { NAME_RE } from "../shared/constants";
-import { FILTER_DIMS, type Filters, type Site, type SiteInput, type SiteSummary } from "../shared/types";
+import { FILTER_DIMS, type Filters, type Site, type SiteInput, type SiteSummary, type Usage } from "../shared/types";
 import { changePassword, config, deleteAccount, me, signup } from "./accounts";
 import { type ApiEnv, authenticate, login, logout } from "./auth";
+import { accountDailyEvents, accountDailyReads, accountMaxSites, isCloud } from "./config";
 import { MAX_EXPORT_ROWS, exportCsv } from "./csv";
 import { randomId } from "./hash";
+import { accountOverReads, accountUsage, recordReads } from "./limits";
 import { getRealtime } from "./realtime";
 import { makeShareToken } from "./share";
 import { getSite, invalidateSite, insertSiteStmt, listSites, ownedSite, updateSiteStmt } from "./sites";
 import { getStats, siteSummaries } from "./stats";
 import { addDays, isDay, localDay, utcDay, validTimezone } from "./time";
-import { Meter, readBudget, recordMeter, todayUsage, usageStmt } from "./usage";
+import { Meter, readBudget, todayUsage, usageStmt } from "./usage";
 
 export const api = new Hono<ApiEnv>();
 api.use("*", authenticate);
@@ -77,17 +79,25 @@ const accountOf = (c: Context<ApiEnv>): number => c.get("accountId") ?? 0;
 
 /**
  * D1's free plan allows 5 million rows read a day, shared with ingest. Past
- * the read budget the dashboard pauses so tracking never starves.
+ * the read budget the dashboard pauses so tracking never starves. In cloud
+ * mode `accountId` (the site's account, also for share links) has its own
+ * daily read limit too.
  */
-async function readGuard(c: Context<ApiEnv>): Promise<Response | null> {
-  const u = await todayUsage(c.env.DB, c.env, Date.now());
-  if (u.rows_read < readBudget(c.env)) return null;
-  return c.json({ error: "Today's database read budget is used up, so the dashboard is paused until 00:00 UTC. Tracking keeps working." }, 429);
+async function readGuard(c: Context<ApiEnv>, accountId: number): Promise<Response | null> {
+  const now = Date.now();
+  const u = await todayUsage(c.env.DB, c.env, now);
+  if (u.rows_read >= readBudget(c.env)) {
+    return c.json({ error: "Today's database read budget is used up, so the dashboard is paused until 00:00 UTC. Tracking keeps working." }, 429);
+  }
+  if (await accountOverReads(c.env, accountId, now)) {
+    return c.json({ error: "This account's dashboard read limit for today is used up. It resets at 00:00 UTC." }, 429);
+  }
+  return null;
 }
 
-/** Records a request's reads and writes after the response is sent. */
-function settle(c: Context<ApiEnv>, meter: Meter) {
-  c.executionCtx.waitUntil(recordMeter(c.env.DB, meter, Date.now()).catch(() => {}));
+/** Records a request's reads and writes after the response is sent (to `accountId` as well, in cloud mode). */
+function settle(c: Context<ApiEnv>, meter: Meter, accountId: number) {
+  c.executionCtx.waitUntil(recordReads(c.env, meter, accountId, Date.now()).catch(() => {}));
 }
 
 /** Adds rows written by owner deletes to today's usage. */
@@ -99,7 +109,7 @@ async function countWrites(c: Context<ApiEnv>, results: D1Result[]) {
 api.get("/sites", async (c) => {
   const denied = ownerOnly(c);
   if (denied) return denied;
-  const guard = await readGuard(c);
+  const guard = await readGuard(c, accountOf(c));
   if (guard) return guard;
   const now = Date.now();
   const meter = new Meter();
@@ -110,7 +120,7 @@ api.get("/sites", async (c) => {
     return { site, views: s.views.reduce((a, b) => a + b, 0), uniques: s.uniques.reduce((a, b) => a + b, 0), spark: s.views };
   });
   out.sort((a, b) => b.views - a.views || a.site.name.localeCompare(b.site.name));
-  settle(c, meter);
+  settle(c, meter, accountOf(c));
   return c.json(out);
 });
 
@@ -127,6 +137,11 @@ api.post("/sites", async (c) => {
   if (denied) return denied;
   const input = parseSiteInput(await c.req.json<Fields>().catch(() => ({})));
   if (typeof input === "string") return c.json({ error: input }, 400);
+  if (isCloud(c.env)) {
+    const max = accountMaxSites(c.env);
+    const row = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM sites WHERE account_id = ?").bind(accountOf(c)).first<{ n: number }>();
+    if ((row?.n ?? 0) >= max) return c.json({ error: `This account has reached its limit of ${max} sites.` }, 403);
+  }
   const site: Site = {
     ...input,
     id: randomId(8),
@@ -220,7 +235,7 @@ api.get("/sites/:id/stats", async (c) => {
   if (site instanceof Response) return site;
   const range = rangeFrom(c, site, 30);
   if (!range) return c.json({ error: `Use from and to as YYYY-MM-DD, from on or before to, at most ${MAX_RANGE_DAYS} days apart` }, 400);
-  const guard = await readGuard(c);
+  const guard = await readGuard(c, site.account_id);
   if (guard) return guard;
   const filters: Filters = {};
   for (const dim of FILTER_DIMS) {
@@ -229,18 +244,18 @@ api.get("/sites/:id/stats", async (c) => {
   }
   const meter = new Meter();
   const stats = await getStats(c.env.DB, site, range, filters, c.req.query("compare") === "1", Date.now(), meter);
-  settle(c, meter);
+  settle(c, meter, site.account_id);
   return c.json(stats);
 });
 
 api.get("/sites/:id/realtime", async (c) => {
   const site = await siteOr404(c);
   if (site instanceof Response) return site;
-  const guard = await readGuard(c);
+  const guard = await readGuard(c, site.account_id);
   if (guard) return guard;
   const meter = new Meter();
   const rt = await getRealtime(c.env.DB, site, Date.now(), meter);
-  settle(c, meter);
+  settle(c, meter, site.account_id);
   return c.json(rt);
 });
 
@@ -251,10 +266,10 @@ api.get("/sites/:id/export.csv", async (c) => {
   if (site instanceof Response) return site;
   const range = rangeFrom(c, site, 90);
   if (!range) return c.json({ error: "Use from and to as YYYY-MM-DD" }, 400);
-  const guard = await readGuard(c);
+  const guard = await readGuard(c, site.account_id);
   if (guard) return guard;
   const meter = new Meter();
-  const stream = exportCsv(c.env.DB, site.id, range.from, range.to, meter, () => settle(c, meter));
+  const stream = exportCsv(c.env.DB, site.id, range.from, range.to, meter, () => settle(c, meter, site.account_id));
   return new Response(stream, {
     headers: {
       "x-lf-max-rows": String(MAX_EXPORT_ROWS),
@@ -284,5 +299,9 @@ api.delete("/sites/:id/data", async (c) => {
 api.get("/usage", async (c) => {
   const denied = ownerOnly(c);
   if (denied) return denied;
-  return c.json(await todayUsage(c.env.DB, c.env, Date.now()));
+  const now = Date.now();
+  if (!isCloud(c.env)) return c.json<Usage>({ ...(await todayUsage(c.env.DB, c.env, now)), scope: "install" });
+  const day = utcDay(now);
+  const u = await accountUsage(c.env.DB, accountOf(c), day);
+  return c.json<Usage>({ day, requests: 0, ...u, budget: accountDailyEvents(c.env), read_budget: accountDailyReads(c.env), scope: "account" });
 });

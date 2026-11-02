@@ -3,10 +3,12 @@ import { MAX_BODY } from "../shared/constants";
 import { compileExcludes } from "../shared/paths";
 import type { ClientEvent, Site } from "../shared/types";
 import { cleanProps, cutPath, parseBatch, validEvent } from "../shared/validate";
+import { isCloud } from "./config";
 import type { Env } from "./env";
 import { type EventRow, WRITES_PER_EVENT, insertEventsStmt, readCapped } from "./events";
 import { geoFrom } from "./geo";
 import { getSalt, visitorHash } from "./hash";
+import { accountOverEvents, accountUsageStmt } from "./limits";
 import { resolveClient } from "./origin";
 import { allow } from "./ratelimit";
 import { getSite } from "./sites";
@@ -54,6 +56,9 @@ export async function ingest(req: Request, text: string, env: Env, nowMs: number
   const client = await resolveClient(req, site, Math.floor(nowMs / 1000));
   if (!client || detectBot(client.ua)) return;
   if (await overBudget(env, nowMs)) return;
+  // Cloud only: self mode skips this read so ingest costs what it always has.
+  const cloud = isCloud(env);
+  if (cloud && (await accountOverEvents(env, site.account_id, nowMs))) return;
 
   const salt = await getSalt(env.DB, utcDay(nowMs));
   const visitor = await visitorHash(salt, site.id, client.ip, client.ua);
@@ -84,10 +89,11 @@ export async function ingest(req: Request, text: string, env: Env, nowMs: number
       props: props && Object.keys(props).length > 0 ? JSON.stringify(props) : null,
     };
   });
-  await env.DB.batch([
-    insertEventsStmt(env.DB, rows),
-    usageStmt(env.DB, utcDay(nowMs), 1, rows.length, rows.length * WRITES_PER_EVENT + 1),
-  ]);
+  const today = utcDay(nowMs);
+  const written = rows.length * WRITES_PER_EVENT + 1;
+  const stmts = [insertEventsStmt(env.DB, rows), usageStmt(env.DB, today, 1, rows.length, cloud ? written + 1 : written)];
+  if (cloud) stmts.push(accountUsageStmt(env.DB, site.account_id, today, rows.length, written, 0));
+  await env.DB.batch(stmts);
 }
 
 export async function handleIngest(req: Request, env: Env, ctx: { waitUntil(p: Promise<unknown>): void }): Promise<Response> {
