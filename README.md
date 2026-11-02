@@ -10,7 +10,7 @@ A lanternfish is a deep-sea fish that makes its own light.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/irfanfaraaz/lanternfish)
 
-**Contents:** [What it tells you](#what-it-tells-you) · [Privacy](#privacy) · [Deploy](#deploy) · [Add a site](#add-a-site) · [Next.js](#nextjs) · [AI agents](#ai-agents-and-crawlers) · [Free-tier budget](#free-tier-budget) · [Configuration](#configuration) · [Development](#development)
+**Contents:** [What it tells you](#what-it-tells-you) · [Privacy](#privacy) · [Deploy](#deploy) · [Add a site](#add-a-site) · [Next.js](#nextjs) · [AI agents](#ai-agents-and-crawlers) · [Free-tier budget](#free-tier-budget) · [Configuration](#configuration) · [Hosted mode](#hosted-mode) · [Development](#development)
 
 ## What it tells you
 
@@ -72,6 +72,8 @@ bunx wrangler d1 migrations apply lanternfish --remote
 ```
 
 Migrations are numbered SQL files in `migrations/` and only ever add to the schema.
+
+After upgrading past the hosted-mode release, sign in once more: the session format changed.
 
 ## Add a site
 
@@ -191,10 +193,32 @@ Everything is set through Worker variables and secrets. Nothing personal is in t
 | `RETENTION_DAYS` | var | `90` (`0` keeps raw events forever) |
 | `DAILY_WRITE_BUDGET` | var | `95000` |
 | `DAILY_READ_BUDGET` | var | `4000000` |
+| `MODE` | var | `self`; `cloud` turns on [hosted mode](#hosted-mode) |
+| `SIGNUPS` | var | `open`; `closed` refuses new accounts (hosted mode) |
+| `ACCOUNT_DAILY_EVENTS` | var | `10000` events stored per account per UTC day (hosted mode) |
+| `ACCOUNT_DAILY_READS` | var | `500000` dashboard rows read per account per UTC day (hosted mode) |
+| `ACCOUNT_MAX_SITES` | var | `10` sites per account (hosted mode) |
+| `CRON_QUERY_BUDGET` | var | `40` D1 queries per hourly run; raise to about `900` on the Workers Paid plan |
 
 The owner password is hashed with PBKDF2-SHA256 at 10,000 iterations. The free plan gives a Worker 10 ms of CPU per request, and 100,000 iterations take about 50 ms. Logins are rate-limited, and the hash only exists as a Worker secret.
 
 CSV exports are capped at 400,000 rows per download (the free plan allows 50 database queries per request). Export a shorter range for more.
+
+## Hosted mode
+
+By default Lanternfish has one owner and one password. Set `"MODE": "cloud"` in `wrangler.jsonc` to run it as a service other people sign up for:
+
+- Anyone can create an account with an email and a password (12 characters or more), unless `SIGNUPS` is `closed`.
+- Each account sees and changes only its own sites, data, keys and share links.
+- Each account has daily limits on events stored and dashboard rows read, and a cap on sites (see [Configuration](#configuration)). The whole-install budgets still apply on top. Share links and public stats count against the site owner's account.
+- People can change their password (which signs out every other device) and delete their account with all its data from the **Account** page.
+- `OWNER_PASSWORD_HASH` is ignored; the self-hosted owner (account 1) can't sign in.
+
+Set it up with `bun run setup --cloud`, which sets only `SESSION_SECRET`.
+
+The free plan's limits are shared by every account: a few thousand visits a day in total (see [Free-tier budget](#free-tier-budget)). A real hosted service needs the Workers Paid plan; then raise `DAILY_WRITE_BUDGET`, `DAILY_READ_BUDGET` and `CRON_QUERY_BUDGET` to match.
+
+Not built yet: email verification, password reset (the operator resets a password with `wrangler d1 execute`), billing, an admin page, and bot protection on sign-up beyond a per-IP rate limit.
 
 ## Development
 

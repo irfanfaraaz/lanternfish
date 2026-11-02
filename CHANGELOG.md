@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Hosted mode (`MODE=cloud`): sign-up with email and password, per-account isolation, per-account daily limits on events and dashboard reads, a cap on sites per account, and an Account page to change the password or delete the account. See the README's "Hosted mode".
+- `CRON_QUERY_BUDGET` sets how many D1 queries the hourly job may use; the job now serves every account's sites and rotates which sites go first.
+- `bun run setup --cloud`.
+
+### Changed
+
+- Sessions now name their account. Self-hosted owners sign in once more after upgrading. Run `bunx wrangler d1 migrations apply lanternfish --remote` (migration `0002_accounts.sql`).
+
 ## 2026-10-17
 
 ### Added
