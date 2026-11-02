@@ -1,8 +1,8 @@
 import { type Context, Hono } from "hono";
 import { NAME_RE } from "../shared/constants";
 import { FILTER_DIMS, type Filters, type Site, type SiteInput, type SiteSummary } from "../shared/types";
+import { changePassword, config, deleteAccount, me, signup } from "./accounts";
 import { type ApiEnv, authenticate, login, logout } from "./auth";
-import { retentionDays } from "./cron";
 import { MAX_EXPORT_ROWS, exportCsv } from "./csv";
 import { randomId } from "./hash";
 import { getRealtime } from "./realtime";
@@ -18,7 +18,11 @@ api.use("*", authenticate);
 api.get("/health", (c) => c.json({ ok: true }));
 api.post("/login", login);
 api.post("/logout", logout);
-api.get("/me", (c) => c.json({ owner: c.get("owner"), shareSite: c.get("shareSite"), retentionDays: retentionDays(c.env) }));
+api.get("/me", me);
+api.get("/config", config);
+api.post("/signup", signup);
+api.post("/account/password", changePassword);
+api.delete("/account", deleteAccount);
 
 type Fields = Partial<Record<keyof SiteInput, unknown>>;
 const DOMAIN_RE = /^(\*\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;
