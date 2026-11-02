@@ -12,7 +12,7 @@ export function Funnel({ steps, loads }: { steps: { section: string; loads: numb
           <li key={s.section}>
             <code>{s.section}</code>
             <span class="track" role="img" aria-label={`${s.section}: ${pct(s.loads, base)} of page loads`}>
-              <span style={{ width: `${Math.min(100, (s.loads / base) * 100)}%` }} />
+              <span style={{ "--w": String(Math.min(1, s.loads / base)) }} />
             </span>
             <span class="num">{num(s.loads)}</span>
             <span class="drop">{i === 0 ? pct(s.loads, base) : drop > 0 ? `−${Math.round(drop * 100)}%` : "—"}</span>

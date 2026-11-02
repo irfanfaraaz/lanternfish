@@ -21,8 +21,8 @@ function Shared() {
 function NotFound() {
   return (
     <Shell>
-      <div class="head grid">
-        <div class="span-7">
+      <div class="head">
+        <div class="head-title">
           <h1>Not found</h1>
           <p class="sub">
             There's nothing at this address. <a href="/">Back to your sites</a>

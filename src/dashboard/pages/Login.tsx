@@ -43,19 +43,21 @@ export function Login() {
   };
 
   const mark = (
-    <h1 class="login-mark span-7">
-      Lantern
-      <br />
-      fish<span>.</span>
-    </h1>
+    <div class="login-side">
+      <h1 class="login-mark">
+        Lantern
+        <br />
+        fish<span>.</span>
+      </h1>
+    </div>
   );
 
   // Until /config answers we don't know which form to show, so show none.
   if (!config.data) {
     return (
-      <main class="login grid">
+      <main class="login" id="main">
         {mark}
-        <div class="span-5">
+        <div class="login-card card">
           {config.error ? (
             <>
               <p class="msg error" role="alert">
@@ -76,9 +78,10 @@ export function Login() {
   }
 
   return (
-    <main class="login grid">
+    <main class="login" id="main">
       {mark}
-      <form class="span-5" onSubmit={submit}>
+      <form class="login-card card" onSubmit={submit}>
+        <h2 class="login-title">{signup ? "Create an account" : "Sign in"}</h2>
         <p class="note">{cloud ? (signup ? "Create an account to start tracking your sites." : "Private analytics for your sites. Sign in to your account.") : "Private analytics for your sites. Sign in as the owner."}</p>
         {cloud && (
           <div class="field">
@@ -96,7 +99,7 @@ export function Login() {
             {error}
           </p>
         )}
-        <div>
+        <div class="actions">
           <button class="btn primary" type="submit" aria-busy={busy}>
             {signup ? (busy ? "Creating…" : "Create account") : busy ? "Signing in…" : "Sign in"}
           </button>

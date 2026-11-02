@@ -4,7 +4,7 @@ import { Sparkline } from "../charts/Sparkline";
 import { Shell } from "../components/Shell";
 import { ErrorLine, Skeleton } from "../components/ui";
 import { num } from "../format";
-import { Plus } from "../icons";
+import { DoodleLantern, Plus } from "../icons";
 
 export function Sites() {
   const { data, error, loading, reload } = useApi<SiteSummary[]>("/sites");
@@ -12,12 +12,20 @@ export function Sites() {
 
   return (
     <Shell>
-      <div class="head grid">
-        <div class="span-7">
+      <div class="head">
+        <div class="head-title">
           <h1>Sites</h1>
-          <p class="sub">{data ? `${data.length} ${data.length === 1 ? "site" : "sites"} · ${num(views)} views in the last 30 days` : " "}</p>
+          <p class="sub">
+            {data ? (
+              <>
+                {data.length} {data.length === 1 ? "site" : "sites"} · <span class="n">{num(views)}</span> views in the last 30 days
+              </>
+            ) : (
+              " "
+            )}
+          </p>
         </div>
-        <div class="span-5 head-actions">
+        <div class="head-actions">
           <a class="btn primary" href="/new">
             <Plus />
             Add site
@@ -26,20 +34,23 @@ export function Sites() {
       </div>
 
       {error && <ErrorLine message={error} retry={reload} />}
-      {loading && !data && <Skeleton lines={4} />}
+      {loading && !data && (
+        <div class="panel pad">
+          <Skeleton lines={4} />
+        </div>
+      )}
 
       {data && data.length === 0 && (
-        <div class="sites">
-          <div class="empty">
-            <p>
-              No sites yet. Add one, then paste its script tag into your site's <code>&lt;head&gt;</code>. Visits show up here within a few seconds.
-            </p>
-            <p style={{ marginTop: "16px" }}>
-              <a class="btn" href="/new">
-                Add your first site
-              </a>
-            </p>
-          </div>
+        <div class="card empty-card">
+          <DoodleLantern />
+          <h2>No sites yet</h2>
+          <p>
+            Add one, then paste its script tag into your site's <code>&lt;head&gt;</code>. Visits show up here within a few seconds.
+          </p>
+          <a class="btn primary" href="/new">
+            <Plus />
+            Add your first site
+          </a>
         </div>
       )}
 
@@ -52,18 +63,21 @@ export function Sites() {
             <span role="columnheader">Last 30 days</span>
           </div>
           {data.map((s) => (
-            <a class="sites-row" role="row" href={`/s/${s.site.id}`} key={s.site.id}>
+            <a class="sites-row lift" role="row" href={`/s/${s.site.id}`} key={s.site.id}>
               <span role="cell">
                 <span class="site-name">{s.site.name}</span>
-                <br />
                 <span class="site-domain">{s.site.domains.join(", ")}</span>
               </span>
               <span role="cell" aria-label={`${s.views} views`}>
-                <span class="cell-label" aria-hidden="true">Views</span>
+                <span class="cell-label" aria-hidden="true">
+                  Views
+                </span>
                 <span class="big">{num(s.views)}</span>
               </span>
               <span role="cell" aria-label={`${s.uniques} visitors`}>
-                <span class="cell-label" aria-hidden="true">Visitors</span>
+                <span class="cell-label" aria-hidden="true">
+                  Visitors
+                </span>
                 <span class="big">{num(s.uniques)}</span>
               </span>
               <span role="cell">
