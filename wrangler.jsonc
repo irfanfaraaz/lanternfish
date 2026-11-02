@@ -14,7 +14,10 @@
     { "binding": "DB", "database_name": "lanternfish", "migrations_dir": "migrations" }
   ],
   "triggers": { "crons": ["10 * * * *"] },
+  // Cloud mode (MODE "cloud") also reads SIGNUPS ("open"), ACCOUNT_DAILY_EVENTS (10000),
+  // ACCOUNT_DAILY_READS (500000), ACCOUNT_MAX_SITES (10) and CRON_QUERY_BUDGET (40).
   "vars": {
+    "MODE": "self",
     "RETENTION_DAYS": "90",
     "DAILY_WRITE_BUDGET": "95000",
     "DAILY_READ_BUDGET": "4000000"
