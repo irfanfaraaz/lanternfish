@@ -1,11 +1,10 @@
 import type { Env } from "./env";
 import { getSalt } from "./hash";
 import { rollupDay } from "./rollup";
-import { listSites } from "./sites";
+import { listAllSites } from "./sites";
 import { addDays, localDay, utcDay } from "./time";
 import { usageStmt } from "./usage";
 
-const ACCOUNT_ID = 1;
 const DELETE_CHUNK = 5000;
 /** Free plan allows 50 D1 queries per invocation; leave headroom. */
 const QUERY_BUDGET = 40;
@@ -40,7 +39,7 @@ export async function runCron(env: Env, nowMs: number): Promise<void> {
   written += maint.reduce((n, r) => n + (r.meta.rows_written ?? 0), 0);
   queries += 4;
 
-  const sites = await listSites(db, ACCOUNT_ID);
+  const sites = await listAllSites(db);
   const { results: done } = await db
     .prepare("SELECT site_id, day FROM rollups WHERE day >= ?")
     .bind(addDays(todayUtc, -(CATCH_UP_DAYS + 2)))
