@@ -105,6 +105,22 @@ export function insertSiteStmt(db: D1Database, s: Site): D1PreparedStatement {
     .bind(r.id, r.account_id, r.name, r.domains, r.timezone, r.public, r.server_key, r.exclude_paths, r.funnel, r.share_nonce, r.created);
 }
 
+/**
+ * Inserts the site only while its account has fewer than `max` sites, in one
+ * statement so two concurrent requests can't both pass the check.
+ * `meta.changes` is 0 when the limit stopped it.
+ */
+export function insertSiteUnderLimitStmt(db: D1Database, s: Site, max: number): D1PreparedStatement {
+  const r = siteToRow(s);
+  return db
+    .prepare(
+      `INSERT INTO sites (id, account_id, name, domains, timezone, public, server_key, exclude_paths, funnel, share_nonce, created)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       WHERE (SELECT COUNT(*) FROM sites WHERE account_id = ?) < ?`,
+    )
+    .bind(r.id, r.account_id, r.name, r.domains, r.timezone, r.public, r.server_key, r.exclude_paths, r.funnel, r.share_nonce, r.created, r.account_id, max);
+}
+
 export function updateSiteStmt(db: D1Database, s: Site): D1PreparedStatement {
   const r = siteToRow(s);
   return db

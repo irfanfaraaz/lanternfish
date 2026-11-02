@@ -99,6 +99,49 @@ describe("cloud accounts", () => {
     expect((await post("/signup", { email: "u6@b.co", password: PW }, CLOUD, "203.0.113.51")).status).toBe(201);
   });
 
+  it("successful logins do not clear the sign-up limit", async () => {
+    const ip = "203.0.113.60";
+    await seedAccount("in@example.com", PW);
+    for (let i = 0; i < 4; i++) expect((await post("/signup", { email: `s${i}@b.co`, password: PW }, CLOUD, ip)).status).toBe(201);
+    expect((await post("/login", { email: "in@example.com", password: PW }, CLOUD, ip)).status).toBe(204);
+    expect((await post("/signup", { email: "s4@b.co", password: PW }, CLOUD, ip)).status).toBe(201);
+    expect((await post("/signup", { email: "s5@b.co", password: PW }, CLOUD, ip)).status).toBe(429);
+  });
+
+  it("sign-ups do not count toward the login limit", async () => {
+    const ip = "203.0.113.61";
+    await seedAccount("in@example.com", PW);
+    for (let i = 0; i < 5; i++) expect((await post("/signup", { email: `t${i}@b.co`, password: PW }, CLOUD, ip)).status).toBe(201);
+    expect((await post("/login", { email: "in@example.com", password: PW }, CLOUD, ip)).status).toBe(204);
+  });
+
+  it("an old cookie fails for a new account that reuses a deleted account's id", async () => {
+    const idOf = async (email: string) => (await env.DB.prepare("SELECT id FROM accounts WHERE email = ?").bind(email).first<{ id: number }>())!.id;
+    const first = await post("/signup", { email: "first@example.com", password: PW });
+    expect(first.status).toBe(201);
+    const oldCookie = cookieOf(first);
+    const oldId = await idOf("first@example.com");
+    expect((await apiCall(oldCookie, "DELETE", "/account", { password: PW }, CLOUD)).status).toBe(204);
+
+    const second = await post("/signup", { email: "second@example.com", password: PW });
+    expect(second.status).toBe(201);
+    expect(await idOf("second@example.com")).toBe(oldId);
+    expect((await apiCall(oldCookie, "GET", "/me", undefined, CLOUD)).status).toBe(401);
+    expect((await apiCall(cookieOf(second), "GET", "/me", undefined, CLOUD)).status).toBe(200);
+  });
+
+  it("a new account starts at a random positive session generation", async () => {
+    const gens = new Set<number>();
+    for (let i = 0; i < 3; i++) {
+      expect((await post("/signup", { email: `g${i}@example.com`, password: PW }, CLOUD, `203.0.113.7${i}`)).status).toBe(201);
+      const { session_gen } = (await env.DB.prepare("SELECT session_gen FROM accounts WHERE email = ?").bind(`g${i}@example.com`).first<{ session_gen: number }>())!;
+      expect(session_gen).toBeGreaterThan(0);
+      expect(session_gen).toBeLessThan(2 ** 31);
+      gens.add(session_gen);
+    }
+    expect(gens.size).toBe(3);
+  });
+
   it("cloud login: right password → 204 + cookie, wrong → 401", async () => {
     const id = await seedAccount("you@example.com", PW);
     const ok = await post("/login", { email: " You@Example.com", password: PW });
@@ -182,5 +225,16 @@ describe("cloud accounts", () => {
 
     expect((await apiCall(cookie, "GET", "/me", undefined, CLOUD)).status).toBe(401);
     expect((await apiCall(await sessionFor(kept), "GET", "/sites/kept1", undefined, CLOUD)).status).toBe(200);
+  });
+
+  it("delete account adds the rows it wrote to today's install usage", async () => {
+    const gone = await seedAccount("gone@example.com", PW);
+    await seedSite({ id: "gone1", account_id: gone, share_nonce: "n1" });
+    const ev = { ts: 1, day: "2026-11-01", name: "pageview", path: "/", pl: null, visitor: "v", ref: null, tag: null, country: null, city: null, device: null, browser: null, os: null, props: null };
+    await insertEvents([{ ...ev, site_id: "gone1" }]);
+    expect((await apiCall(await sessionFor(gone), "DELETE", "/account", { password: PW }, CLOUD)).status).toBe(204);
+    const day = new Date().toISOString().slice(0, 10);
+    const u = await env.DB.prepare("SELECT rows_written FROM usage WHERE day = ?").bind(day).first<{ rows_written: number }>();
+    expect(u?.rows_written ?? 0).toBeGreaterThan(0);
   });
 });

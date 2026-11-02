@@ -50,9 +50,9 @@ export async function serverEvent(req: Request, text: string, env: Env, nowMs: n
   const path = typeof props.path === "string" ? cutPath(props.path) : body.path ? cutPath(body.path) : null;
   if (path && isExcluded(site, path)) return;
   if (await overBudget(env, nowMs)) return;
-  // Cloud only: self mode skips this read so server events cost what they always have.
+  // accountOverEvents skips its read in self mode, so server events cost what they always have.
   const cloud = isCloud(env);
-  if (cloud && (await accountOverEvents(env, site.account_id, nowMs))) return;
+  if (await accountOverEvents(env, site.account_id, nowMs)) return;
 
   // Agents are not people, so they get no visitor hash. Other server events
   // may pass ip + ua to count against the same daily visitor as the browser.

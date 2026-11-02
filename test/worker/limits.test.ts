@@ -2,8 +2,9 @@ import { env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Usage } from "../../src/shared/types";
 import type { Env } from "../../src/worker/env";
+import { insertSiteUnderLimitStmt } from "../../src/worker/sites";
 import { utcDay } from "../../src/worker/time";
-import { SERVER_KEY, apiCall, beacon, call, insertEvents, reset, seedAccount, seedSite, sessionFor, storedEvents } from "./helpers";
+import { SERVER_KEY, apiCall, beacon, call, insertEvents, makeSite, reset, seedAccount, seedSite, sessionFor, storedEvents } from "./helpers";
 
 const CLOUD: Partial<Env> = { MODE: "cloud" };
 const pv = (p = "/") => ({ n: "pageview", p });
@@ -83,6 +84,22 @@ describe("per-account limits", () => {
     expect(await res.json()).toEqual({ error: "This account has reached its limit of 1 sites." });
     const fresh = await seedAccount("three@example.com", "a long enough password");
     expect((await apiCall(await sessionFor(fresh), "POST", "/sites", { name: "First", domains: ["first.example"] }, over)).status).toBe(201);
+  });
+
+  it("concurrent POST /sites cannot pass the site limit", async () => {
+    const over = { ...CLOUD, ACCOUNT_MAX_SITES: "2" };
+    const cookie = await sessionFor(one);
+    const res = await Promise.all([1, 2, 3].map((i) => apiCall(cookie, "POST", "/sites", { name: `S${i}`, domains: [`s${i}.example`] }, over)));
+    expect(res.map((r) => r.status).sort()).toEqual([201, 403, 403]);
+    const row = await env.DB.prepare("SELECT COUNT(*) AS n FROM sites WHERE account_id = ?").bind(one).first<{ n: number }>();
+    expect(row!.n).toBe(2);
+  });
+
+  it("insertSiteUnderLimitStmt inserts nothing at the limit", async () => {
+    const at = await insertSiteUnderLimitStmt(env.DB, makeSite({ id: "x1", account_id: one, share_nonce: "x1" }), 1).run();
+    expect(at.meta.changes).toBe(0);
+    const under = await insertSiteUnderLimitStmt(env.DB, makeSite({ id: "x2", account_id: one, share_nonce: "x2" }), 2).run();
+    expect(under.meta.changes).toBe(1);
   });
 
   it("GET /usage in cloud mode returns the account's numbers", async () => {
