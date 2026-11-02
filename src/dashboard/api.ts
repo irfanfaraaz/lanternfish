@@ -20,6 +20,9 @@ export function isShareMode() {
   return shareToken !== null;
 }
 
+/** A 401 here means a wrong password, not an expired session. */
+const NO_REDIRECT = new Set(["/login", "/signup", "/account/password", "/account"]);
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["content-type"] = "application/json";
@@ -30,7 +33,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   } catch {
     throw new ApiError(0, "Can't reach Lanternfish. Check your connection and try again.");
   }
-  if (res.status === 401 && !shareToken && path !== "/login") {
+  if (res.status === 401 && !shareToken && !NO_REDIRECT.has(path)) {
     const next = location.pathname + location.search;
     if (location.pathname !== "/login") location.assign(`/login?next=${encodeURIComponent(next)}`);
     throw new ApiError(401, "Signed out");
@@ -47,7 +50,7 @@ export const api = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body: unknown = {}) => request<T>("POST", path, body),
   patch: <T>(path: string, body: unknown) => request<T>("PATCH", path, body),
-  del: <T = void>(path: string) => request<T>("DELETE", path),
+  del: <T = void>(path: string, body?: unknown) => request<T>("DELETE", path, body),
 };
 
 export interface Loaded<T> {

@@ -2,7 +2,7 @@ import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
 import { useLocation } from "preact-iso";
 import { FREE_REQUESTS_PER_DAY } from "../../shared/constants";
-import type { Usage } from "../../shared/types";
+import type { Me, Usage } from "../../shared/types";
 import { api, isShareMode, useApi } from "../api";
 import { num } from "../format";
 import { Lantern, Mark } from "../icons";
@@ -10,14 +10,15 @@ import { Lantern, Mark } from "../icons";
 function UsageMeter() {
   const { data } = useApi<Usage>("/usage", 60_000);
   if (!data) return null;
-  const share = Math.max(data.rows_written / data.budget, data.rows_read / data.read_budget);
+  const account = data.scope === "account";
+  const share = Math.max((account ? data.events : data.rows_written) / data.budget, data.rows_read / data.read_budget);
+  const title = account
+    ? `Today (UTC): ${num(data.events)} of ${num(data.budget)} events, ${num(data.rows_read)} of ${num(data.read_budget)} reads, against your account limits`
+    : `Today (UTC): ${num(data.rows_written)} of ${num(data.budget)} D1 rows written, ${num(data.rows_read)} of ${num(data.read_budget)} rows read, ${num(data.requests)} accepted ingest requests (Workers allows ${num(FREE_REQUESTS_PER_DAY)} requests a day)`;
   return (
-    <div
-      class="usage"
-      title={`Today (UTC): ${num(data.rows_written)} of ${num(data.budget)} D1 rows written, ${num(data.rows_read)} of ${num(data.read_budget)} rows read, ${num(data.requests)} accepted ingest requests (Workers allows ${num(FREE_REQUESTS_PER_DAY)} requests a day)`}
-    >
-      <span>D1 {Math.round(share * 100)}%</span>
-      <span class={`usage-bar${share > 0.8 ? " high" : share > 0.6 ? " warm" : ""}`} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(share * 100)} aria-label="Share of today's D1 budget used">
+    <div class="usage" title={title}>
+      <span>{account ? "Today" : "D1"} {Math.round(share * 100)}%</span>
+      <span class={`usage-bar${share > 0.8 ? " high" : share > 0.6 ? " warm" : ""}`} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(share * 100)} aria-label={account ? "Share of today's account limits used" : "Share of today's D1 budget used"}>
         <span style={{ width: `${Math.min(100, share * 100)}%` }} />
       </span>
     </div>
@@ -55,6 +56,7 @@ export function Shell({ siteId, children }: { siteId?: string | undefined; child
   const { path, route } = useLocation();
   const share = isShareMode();
   const sites = useApi<{ id: string; name: string }[]>(share ? null : "/sites/list");
+  const me = useApi<Me>(share ? null : "/me");
   const tabs = siteId
     ? [
         { href: `/s/${siteId}`, label: "Overview" },
@@ -104,6 +106,11 @@ export function Shell({ siteId, children }: { siteId?: string | undefined; child
           <span class="band-spacer" />
           {!share && <UsageMeter />}
           <ThemeSwitch />
+          {!share && me.data?.mode === "cloud" && (
+            <a class="linkish" href="/account" aria-current={path === "/account" ? "page" : undefined}>
+              Account
+            </a>
+          )}
           {!share && (
             <button type="button" class="linkish" onClick={signOut}>
               Sign out

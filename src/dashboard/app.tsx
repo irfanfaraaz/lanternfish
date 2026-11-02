@@ -1,6 +1,7 @@
 import { LocationProvider, Route, Router, useRoute } from "preact-iso";
 import { setShareToken } from "./api";
 import { Shell } from "./components/Shell";
+import { Account } from "./pages/Account";
 import { Login } from "./pages/Login";
 import { Overview } from "./pages/Overview";
 import { Realtime } from "./pages/Realtime";
@@ -38,6 +39,7 @@ export function App() {
       <Router>
         <Route path="/login" component={Login} />
         <Route path="/" component={Sites} />
+        <Route path="/account" component={Account} />
         <Route path="/new" component={NewSite} />
         <Route path="/s/:id" component={SiteOverview} />
         <Route path="/s/:id/live" component={SiteLive} />

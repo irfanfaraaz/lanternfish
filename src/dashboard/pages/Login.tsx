@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
-import { api } from "../api";
+import type { Me } from "../../shared/types";
+import { api, useApi } from "../api";
 
 /** Only same-origin paths; `/\\evil.com` and `//evil.com` resolve elsewhere and are refused. */
 function safeNext(next: string | null): string {
@@ -15,14 +16,25 @@ function safeNext(next: string | null): string {
 export function Login() {
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const config = useApi<Pick<Me, "mode" | "signups">>("/config");
+  const cloud = config.data?.mode === "cloud";
+  const signup = cloud && creating && config.data?.signups === true;
+
+  const toggle = () => {
+    setCreating(!creating);
+    setError(undefined);
+  };
 
   const submit = async (e: Event) => {
     e.preventDefault();
-    const password = new FormData(e.target as HTMLFormElement).get("password");
+    const f = new FormData(e.target as HTMLFormElement);
+    const password = f.get("password");
     setBusy(true);
     setError(undefined);
     try {
-      await api.post("/login", { password });
+      if (cloud) await api.post(signup ? "/signup" : "/login", { email: f.get("email"), password });
+      else await api.post("/login", { password });
       location.assign(safeNext(new URLSearchParams(location.search).get("next")));
     } catch (err) {
       setError((err as Error).message);
@@ -38,10 +50,22 @@ export function Login() {
         fish<span>.</span>
       </h1>
       <form class="span-5" onSubmit={submit}>
-        <p class="note">Private analytics for your sites. Sign in as the owner.</p>
+        <p class="note">{cloud ? (signup ? "Create an account to start tracking your sites." : "Private analytics for your sites. Sign in to your account.") : "Private analytics for your sites. Sign in as the owner."}</p>
+        {config.error && (
+          <p class="msg error" role="alert">
+            {config.error}
+          </p>
+        )}
+        {cloud && (
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autoComplete="email" required autoFocus />
+          </div>
+        )}
         <div class="field" data-invalid={error ? "" : undefined}>
           <label for="pw">Password</label>
-          <input id="pw" name="password" type="password" autoComplete="current-password" required autoFocus aria-describedby={error ? "pw-err" : undefined} />
+          <input id="pw" name="password" type="password" autoComplete={signup ? "new-password" : "current-password"} required minLength={signup ? 12 : undefined} autoFocus={!cloud} aria-describedby={error ? "pw-err" : undefined} />
+          {signup && <span class="hint">At least 12 characters.</span>}
         </div>
         {error && (
           <p id="pw-err" class="msg error" role="alert">
@@ -50,8 +74,13 @@ export function Login() {
         )}
         <div>
           <button class="btn primary" type="submit" aria-busy={busy}>
-            {busy ? "Signing in…" : "Sign in"}
+            {signup ? (busy ? "Creating…" : "Create account") : busy ? "Signing in…" : "Sign in"}
           </button>
+          {cloud && config.data?.signups && (
+            <button class="linkish" type="button" onClick={toggle}>
+              {signup ? "Sign in" : "Create an account"}
+            </button>
+          )}
         </div>
       </form>
     </main>

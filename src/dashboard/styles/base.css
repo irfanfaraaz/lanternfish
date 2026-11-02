@@ -241,6 +241,24 @@ kbd,
   width: 40px;
 }
 
+.band a.linkish {
+  padding: 0 8px;
+  text-decoration: none;
+}
+
+.band a.linkish[aria-current="page"] {
+  color: var(--band-ink);
+}
+
+.actions .linkish {
+  border: 0;
+  background: none;
+  color: var(--ink-2, inherit);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .band-icon:hover,
 .band .linkish:hover {
   color: var(--band-ink);
