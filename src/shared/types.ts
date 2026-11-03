@@ -118,6 +118,19 @@ export interface Usage {
   read_budget: number;
 }
 
+/** GET /api/me: who is signed in and what this install allows. */
+export interface Me {
+  owner: boolean;
+  shareSite: string | null;
+  retentionDays: number;
+  mode: "self" | "cloud";
+  email: string | null;
+  /** Sign-ups are possible (cloud mode with SIGNUPS open). */
+  signups: boolean;
+  /** Per-account daily limits; null in self mode. */
+  limits: { events: number; reads: number; sites: number } | null;
+}
+
 export interface Realtime {
   visitors: number;
   pages: Row[];

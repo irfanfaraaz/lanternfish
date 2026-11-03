@@ -2,6 +2,7 @@ import type { Context, MiddlewareHandler } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import type { Env } from "./env";
 import { b64url, fromB64url, hmacB64url, timingSafeEqual } from "./hash";
+import { isCloud } from "./config";
 import { readShareToken } from "./share";
 
 export const SESSION_COOKIE = "lf_session";
@@ -58,12 +59,14 @@ export type ApiEnv = { Bindings: Env; Variables: AuthVars };
 
 // Read-only routes a share link may reach, for its own site only.
 const SHARE_ROUTE = /^\/api\/sites\/([^/]+)(?:\/(?:stats|realtime))?$/;
-const PUBLIC_API = new Set(["/api/login", "/api/health"]);
+const PUBLIC_API = new Set(["/api/login", "/api/health", "/api/signup", "/api/config"]);
 
 /** The account a request's session cookie signs in, if the session is still current. */
 async function sessionAccount(c: Context<ApiEnv>, nowSec: number): Promise<number | null> {
   const s = await readSession(getCookie(c, SESSION_COOKIE), c.env.SESSION_SECRET, nowSec);
   if (!s) return null;
+  // In cloud mode the self-hosted owner (account 1) has no password and must not stay signed in.
+  if (isCloud(c.env) && s.accountId === OWNER_ACCOUNT) return null;
   const row = await c.env.DB.prepare("SELECT session_gen FROM accounts WHERE id = ?").bind(s.accountId).first<{ session_gen: number }>();
   return row && row.session_gen === s.gen ? s.accountId : null;
 }
@@ -105,27 +108,70 @@ export function resetLoginFailures() {
   failures.clear();
 }
 
+export const clientIp = (c: Context<ApiEnv>): string => c.req.header("cf-connecting-ip") ?? "local";
+
+/** True when `ip` has used up its attempts (failed logins, every sign-up) in the current window. */
+export function blocked(ip: string, now = Date.now()): boolean {
+  const f = failures.get(ip);
+  return !!f && now - f.since < WINDOW_MS && f.count >= MAX_FAILS;
+}
+
+/** Counts one attempt against `ip`'s window. */
+export function noteAttempt(ip: string, now = Date.now()): void {
+  const f = failures.get(ip);
+  const cur = f && now - f.since < WINDOW_MS ? f : { count: 0, since: now };
+  cur.count++;
+  failures.set(ip, cur);
+}
+
+export const TOO_MANY = "Too many attempts. Try again in 15 minutes.";
+
 /** The self-hosted owner's account. */
-const OWNER_ACCOUNT = 1;
+export const OWNER_ACCOUNT = 1;
+
+// Checked when no account matches, so a missing email costs about as long as a wrong password.
+let dummyHash: Promise<string> | undefined;
 
 export async function login(c: Context<ApiEnv>) {
-  const ip = c.req.header("cf-connecting-ip") ?? "local";
-  const now = Date.now();
-  const f = failures.get(ip);
-  if (f && now - f.since < WINDOW_MS && f.count >= MAX_FAILS) return c.json({ error: "Too many attempts. Try again in 15 minutes." }, 429);
+  const ip = clientIp(c);
+  if (blocked(ip)) return c.json({ error: TOO_MANY }, 429);
+  return isCloud(c.env) ? cloudLogin(c, ip) : selfLogin(c, ip);
+}
 
+async function selfLogin(c: Context<ApiEnv>, ip: string) {
   const body = await c.req.json<{ password?: unknown }>().catch(() => ({}) as { password?: unknown });
   const ok = typeof body.password === "string" && body.password.length <= 200 && (await verifyPassword(body.password, c.env.OWNER_PASSWORD_HASH ?? ""));
   if (!ok) {
-    const cur = f && now - f.since < WINDOW_MS ? f : { count: 0, since: now };
-    cur.count++;
-    failures.set(ip, cur);
+    noteAttempt(ip);
     return c.json({ error: "Wrong password" }, 401);
   }
   failures.delete(ip);
   const row = await c.env.DB.prepare("SELECT session_gen FROM accounts WHERE id = ?").bind(OWNER_ACCOUNT).first<{ session_gen: number }>();
   if (!row) return c.json({ error: "Wrong password" }, 401);
   await setSessionCookie(c, OWNER_ACCOUNT, row.session_gen);
+  return c.body(null, 204);
+}
+
+/** Email and password against `accounts.password_hash`. Account 1 has no hash, so it never matches. */
+async function cloudLogin(c: Context<ApiEnv>, ip: string) {
+  const body = await c.req.json<{ email?: unknown; password?: unknown }>().catch(() => ({}) as { email?: unknown; password?: unknown });
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const password = typeof body.password === "string" && body.password.length <= 200 ? body.password : null;
+  const row =
+    email && password !== null
+      ? await c.env.DB.prepare("SELECT id, password_hash, session_gen FROM accounts WHERE email = ? AND id <> ? AND password_hash IS NOT NULL")
+          .bind(email, OWNER_ACCOUNT)
+          .first<{ id: number; password_hash: string; session_gen: number }>()
+      : null;
+  let ok = false;
+  if (row && password !== null) ok = await verifyPassword(password, row.password_hash);
+  else if (password !== null) await verifyPassword(password, await (dummyHash ??= hashPassword("not-a-real-password")));
+  if (!ok || !row) {
+    noteAttempt(ip);
+    return c.json({ error: "Wrong email or password" }, 401);
+  }
+  failures.delete(ip);
+  await setSessionCookie(c, row.id, row.session_gen);
   return c.body(null, 204);
 }
 
@@ -140,7 +186,11 @@ export async function setSessionCookie(c: Context<ApiEnv>, accountId: number, ge
   });
 }
 
-export function logout(c: Context<ApiEnv>) {
+export function clearSessionCookie(c: Context<ApiEnv>): void {
   deleteCookie(c, SESSION_COOKIE, { path: "/", secure: true });
+}
+
+export function logout(c: Context<ApiEnv>) {
+  clearSessionCookie(c);
   return c.body(null, 204);
 }
