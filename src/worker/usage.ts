@@ -1,13 +1,9 @@
 import type { Usage } from "../shared/types";
 import type { Env } from "./env";
+import { positive } from "./config";
 import { utcDay } from "./time";
 
 type Budgets = Pick<Env, "DAILY_WRITE_BUDGET" | "DAILY_READ_BUDGET">;
-
-const positive = (v: string | undefined, dflt: number) => {
-  const n = Number(v);
-  return Number.isFinite(n) && n > 0 ? n : dflt;
-};
 
 /** Rows written per UTC day before ingest stops (D1 free: 100,000). */
 export function budget(env: Budgets): number {
