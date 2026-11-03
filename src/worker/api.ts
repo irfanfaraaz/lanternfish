@@ -9,7 +9,7 @@ import { randomId } from "./hash";
 import { accountOverReads, accountUsage, recordReads } from "./limits";
 import { getRealtime } from "./realtime";
 import { makeShareToken } from "./share";
-import { getSite, invalidateSite, insertSiteStmt, listSites, ownedSite, updateSiteStmt } from "./sites";
+import { getSite, invalidateSite, insertSiteStmt, insertSiteUnderLimitStmt, listSites, ownedSite, updateSiteStmt } from "./sites";
 import { getStats, siteSummaries } from "./stats";
 import { addDays, isDay, localDay, utcDay, validTimezone } from "./time";
 import { Meter, readBudget, todayUsage, usageStmt } from "./usage";
@@ -137,11 +137,6 @@ api.post("/sites", async (c) => {
   if (denied) return denied;
   const input = parseSiteInput(await c.req.json<Fields>().catch(() => ({})));
   if (typeof input === "string") return c.json({ error: input }, 400);
-  if (isCloud(c.env)) {
-    const max = accountMaxSites(c.env);
-    const row = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM sites WHERE account_id = ?").bind(accountOf(c)).first<{ n: number }>();
-    if ((row?.n ?? 0) >= max) return c.json({ error: `This account has reached its limit of ${max} sites.` }, 403);
-  }
   const site: Site = {
     ...input,
     id: randomId(8),
@@ -150,7 +145,13 @@ api.post("/sites", async (c) => {
     share_nonce: randomId(12),
     created: Math.floor(Date.now() / 1000),
   };
-  await insertSiteStmt(c.env.DB, site).run();
+  if (isCloud(c.env)) {
+    const max = accountMaxSites(c.env);
+    const res = await insertSiteUnderLimitStmt(c.env.DB, site, max).run();
+    if (!res.meta.changes) return c.json({ error: `This account has reached its limit of ${max} sites.` }, 403);
+  } else {
+    await insertSiteStmt(c.env.DB, site).run();
+  }
   return c.json(site, 201);
 });
 
@@ -300,7 +301,7 @@ api.get("/usage", async (c) => {
   const denied = ownerOnly(c);
   if (denied) return denied;
   const now = Date.now();
-  if (!isCloud(c.env)) return c.json<Usage>({ ...(await todayUsage(c.env.DB, c.env, now)), scope: "install" });
+  if (!isCloud(c.env)) return c.json<Usage>(await todayUsage(c.env.DB, c.env, now));
   const day = utcDay(now);
   const u = await accountUsage(c.env.DB, accountOf(c), day);
   return c.json<Usage>({ day, requests: 0, ...u, budget: accountDailyEvents(c.env), read_budget: accountDailyReads(c.env), scope: "account" });

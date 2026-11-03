@@ -111,7 +111,8 @@ describe("rollupDay and cron", () => {
   it("a small CRON_QUERY_BUDGET serves different sites first in consecutive hours", async () => {
     for (const id of ["s1", "s2", "s3", "s4"]) await seedSite({ id, timezone: "UTC" });
     const now = Date.parse("2026-01-15T00:10:00Z");
-    const small = { ...env, CRON_QUERY_BUDGET: "10", RETENTION_DAYS: "0" };
+    // 7 fixed queries + one 4-query rollup per run.
+    const small = { ...env, CRON_QUERY_BUDGET: "11", RETENTION_DAYS: "0" };
     await runCron(small, now);
     await runCron(small, now + 3_600_000);
     const { results } = await env.DB.prepare("SELECT DISTINCT site_id FROM rollups WHERE day = '2026-01-14'").all<{ site_id: string }>();
@@ -127,6 +128,24 @@ describe("rollupDay and cron", () => {
     expect(results.map((r) => r.day)).toEqual(["2026-03-03", "2026-05-31"]);
     const u = await env.DB.prepare("SELECT rows_written FROM usage WHERE day = '2026-06-01'").first<{ rows_written: number }>();
     expect(u!.rows_written).toBeGreaterThan(0);
+  });
+
+  it("pruning many sites leaves query budget for rollups", async () => {
+    for (let i = 0; i < 40; i++) await seedSite({ id: `p${String(i).padStart(2, "0")}`, timezone: "UTC" });
+    const now = Date.parse("2026-06-01T00:10:00Z");
+    await runCron({ ...env, RETENTION_DAYS: "90" }, now);
+    const row = await env.DB.prepare("SELECT COUNT(*) AS n FROM rollups").first<{ n: number }>();
+    expect(row!.n).toBeGreaterThan(0);
+  });
+
+  it("cron prunes account_usage older than 60 days", async () => {
+    const other = await seedAccount("old@example.com", "a-long-password-1");
+    await env.DB.batch(
+      ["2026-03-01", "2026-05-31"].map((d) => env.DB.prepare("INSERT INTO account_usage (account_id, day, events, rows_written, rows_read) VALUES (?, ?, 1, 1, 1)").bind(other, d)),
+    );
+    await runCron(env, Date.parse("2026-06-01T00:10:00Z"));
+    const { results } = await env.DB.prepare("SELECT day FROM account_usage ORDER BY day").all<{ day: string }>();
+    expect(results.map((r) => r.day)).toEqual(["2026-05-31"]);
   });
 
   it("salt rotation keeps yesterday and today only", async () => {

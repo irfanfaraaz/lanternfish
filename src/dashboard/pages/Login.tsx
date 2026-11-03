@@ -42,20 +42,44 @@ export function Login() {
     }
   };
 
+  const mark = (
+    <h1 class="login-mark span-7">
+      Lantern
+      <br />
+      fish<span>.</span>
+    </h1>
+  );
+
+  // Until /config answers we don't know which form to show, so show none.
+  if (!config.data) {
+    return (
+      <main class="login grid">
+        {mark}
+        <div class="span-5">
+          {config.error ? (
+            <>
+              <p class="msg error" role="alert">
+                Couldn't load the sign-in page: {config.error}
+              </p>
+              <button class="btn" type="button" onClick={config.reload} aria-busy={config.loading}>
+                Try again
+              </button>
+            </>
+          ) : (
+            <p class="note" aria-busy="true">
+              Loading…
+            </p>
+          )}
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main class="login grid">
-      <h1 class="login-mark span-7">
-        Lantern
-        <br />
-        fish<span>.</span>
-      </h1>
+      {mark}
       <form class="span-5" onSubmit={submit}>
         <p class="note">{cloud ? (signup ? "Create an account to start tracking your sites." : "Private analytics for your sites. Sign in to your account.") : "Private analytics for your sites. Sign in as the owner."}</p>
-        {config.error && (
-          <p class="msg error" role="alert">
-            {config.error}
-          </p>
-        )}
         {cloud && (
           <div class="field">
             <label for="email">Email</label>

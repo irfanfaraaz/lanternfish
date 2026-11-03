@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { issueSession, readSession, resetLoginFailures } from "../../src/worker/auth";
 import { hmacB64url } from "../../src/worker/hash";
 import { makeShareToken } from "../../src/worker/share";
-import { TEST_SECRET, apiCall, call, login, makeSite, reset, seedSite, sessionFor } from "./helpers";
+import { TEST_SECRET, apiCall, call, login, makeSite, reset, seedAccount, seedSite, sessionFor } from "./helpers";
 
 const loginReq = (password: string, ip: string) =>
   new Request("https://lf.test/api/login", {
@@ -110,6 +110,18 @@ describe("auth", () => {
     expect((await get("/sites/other1/stats")).status).toBe(401);
     expect((await get("/sites")).status).toBe(401);
     expect((await get("/sites/abc123/export.csv")).status).toBe(401);
+  });
+
+  it("a share link works while signed in to another account", async () => {
+    const token = await makeShareToken(env, makeSite(), 0);
+    const two = await seedAccount("two@example.com", "a long enough password");
+    const cookie = await sessionFor(two);
+    const get = (path: string) => call(new Request(`https://lf.test/api${path}`, { headers: { cookie, authorization: `Share ${token}` } }), { MODE: "cloud" });
+    expect((await get("/sites/abc123/stats")).status).toBe(200);
+    const site = await (await get("/sites/abc123")).json<{ server_key: string }>();
+    expect(site.server_key).toBe("");
+    // Off the share's routes the cookie still applies.
+    expect((await get("/sites")).status).toBe(200);
   });
 
   it("expired share token → 401", async () => {

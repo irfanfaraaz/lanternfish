@@ -82,46 +82,73 @@ export const authenticate: MiddlewareHandler<ApiEnv> = async (c, next) => {
   if (PUBLIC_API.has(path)) return next();
 
   const nowSec = Math.floor(Date.now() / 1000);
+  // A valid share link wins over a session cookie, so a signed-in viewer can open another account's share link.
+  const auth = c.req.header("authorization") ?? "";
+  if (auth.startsWith("Share ") && method === "GET") {
+    const m = SHARE_ROUTE.exec(path);
+    const site = m ? await readShareToken(c.env, auth.slice(6), nowSec) : null;
+    if (site && m?.[1] === site) {
+      c.set("owner", false);
+      c.set("accountId", null);
+      c.set("shareSite", site);
+      return next();
+    }
+  }
+
   const accountId = await sessionAccount(c, nowSec);
   c.set("owner", accountId !== null);
   c.set("accountId", accountId);
   c.set("shareSite", null);
   if (accountId !== null) return next();
-
-  const auth = c.req.header("authorization") ?? "";
-  if (auth.startsWith("Share ") && method === "GET") {
-    const site = await readShareToken(c.env, auth.slice(6), nowSec);
-    const m = SHARE_ROUTE.exec(path);
-    if (site && m?.[1] === site) {
-      c.set("shareSite", site);
-      return next();
-    }
-  }
   return c.json({ error: "Not signed in" }, 401);
 };
 
-const failures = new Map<string, { count: number; since: number }>();
+const failures: Window = new Map();
 const MAX_FAILS = 5;
 const WINDOW_MS = 15 * 60_000;
 
 export function resetLoginFailures() {
   failures.clear();
+  signups.clear();
 }
 
 export const clientIp = (c: Context<ApiEnv>): string => c.req.header("cf-connecting-ip") ?? "local";
 
-/** True when `ip` has used up its attempts (failed logins, every sign-up) in the current window. */
-export function blocked(ip: string, now = Date.now()): boolean {
-  const f = failures.get(ip);
-  return !!f && now - f.since < WINDOW_MS && f.count >= MAX_FAILS;
-}
+type Window = Map<string, { count: number; since: number }>;
 
-/** Counts one attempt against `ip`'s window. */
-export function noteAttempt(ip: string, now = Date.now()): void {
-  const f = failures.get(ip);
+const isBlocked = (m: Window, ip: string, now: number): boolean => {
+  const f = m.get(ip);
+  return !!f && now - f.since < WINDOW_MS && f.count >= MAX_FAILS;
+};
+
+const note = (m: Window, ip: string, now: number): void => {
+  const f = m.get(ip);
   const cur = f && now - f.since < WINDOW_MS ? f : { count: 0, since: now };
   cur.count++;
-  failures.set(ip, cur);
+  m.set(ip, cur);
+};
+
+/** True when `ip` has used up its failed password attempts in the current window. */
+export function blocked(ip: string, now = Date.now()): boolean {
+  return isBlocked(failures, ip, now);
+}
+
+/** Counts one failed password attempt against `ip`'s window. */
+export function noteAttempt(ip: string, now = Date.now()): void {
+  note(failures, ip, now);
+}
+
+// Sign-ups have their own window: every attempt counts and a successful login never clears it.
+const signups: Window = new Map();
+
+/** True when `ip` has used up its sign-up attempts in the current window. */
+export function signupBlocked(ip: string, now = Date.now()): boolean {
+  return isBlocked(signups, ip, now);
+}
+
+/** Counts one sign-up attempt against `ip`'s window. */
+export function noteSignup(ip: string, now = Date.now()): void {
+  note(signups, ip, now);
 }
 
 export const TOO_MANY = "Too many attempts. Try again in 15 minutes.";

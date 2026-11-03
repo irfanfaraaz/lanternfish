@@ -19,7 +19,8 @@ export function retentionDays(env: Pick<Env, "RETENTION_DAYS">): number {
  * The hourly job (`10 * * * *`). Each site's local day is rolled up in the
  * first run after that site's midnight, so every site keeps its own day
  * boundaries; missed days are caught up for a few days. Raw events past
- * retention are pruned up to 5,000 per site per run, independently of rollups. Rows written here are
+ * retention are pruned up to 5,000 per site per run, independently of rollups,
+ * using at most half the query budget so rollups always get the rest. Rows written here are
  * added to today's usage so the ingest budget accounts for them. Work that
  * would pass the per-invocation query budget (CRON_QUERY_BUDGET) waits for
  * the next hour. The site order rotates each hour, so when the budget can't
@@ -34,12 +35,14 @@ export async function runCron(env: Env, nowMs: number): Promise<void> {
   let written = 0;
 
   await getSalt(db, todayUtc);
+  const usageCutoff = utcDay(nowMs - 60 * 86_400_000);
   const maint = await db.batch([
     db.prepare("DELETE FROM salts WHERE day < ?").bind(utcDay(nowMs - 86_400_000)),
-    db.prepare("DELETE FROM usage WHERE day < ?").bind(utcDay(nowMs - 60 * 86_400_000)),
+    db.prepare("DELETE FROM usage WHERE day < ?").bind(usageCutoff),
+    db.prepare("DELETE FROM account_usage WHERE day < ?").bind(usageCutoff),
   ]);
   written += maint.reduce((n, r) => n + (r.meta.rows_written ?? 0), 0);
-  queries += 4;
+  queries += 5;
 
   const sites = rotate(await listAllSites(db), Math.floor(nowMs / 3_600_000));
   const { results: done } = await db
@@ -50,9 +53,12 @@ export async function runCron(env: Env, nowMs: number): Promise<void> {
   queries += 2;
 
   // Prune first and on its own: a failing rollup must not let raw events pile up.
+  // Pruning may use at most half the budget so rollups always get the rest;
+  // the hourly rotation spreads pruning across sites.
   if (keep > 0) {
+    const pruneLimit = queries + Math.floor(queryBudget / 2);
     for (const site of sites) {
-      if (queries + 1 > queryBudget) break;
+      if (queries + 1 > Math.min(pruneLimit, queryBudget)) break;
       try {
         const r = await db
           .prepare(`DELETE FROM events WHERE id IN (SELECT id FROM events WHERE site_id = ? AND day < ? LIMIT ${DELETE_CHUNK})`)

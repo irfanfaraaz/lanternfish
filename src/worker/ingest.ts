@@ -56,9 +56,9 @@ export async function ingest(req: Request, text: string, env: Env, nowMs: number
   const client = await resolveClient(req, site, Math.floor(nowMs / 1000));
   if (!client || detectBot(client.ua)) return;
   if (await overBudget(env, nowMs)) return;
-  // Cloud only: self mode skips this read so ingest costs what it always has.
+  // accountOverEvents skips its read in self mode, so ingest costs what it always has.
   const cloud = isCloud(env);
-  if (cloud && (await accountOverEvents(env, site.account_id, nowMs))) return;
+  if (await accountOverEvents(env, site.account_id, nowMs)) return;
 
   const salt = await getSalt(env.DB, utcDay(nowMs));
   const visitor = await visitorHash(salt, site.id, client.ip, client.ua);
