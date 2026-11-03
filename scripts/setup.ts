@@ -1,5 +1,6 @@
 // One-time setup after cloning: deploys the Worker (which provisions D1),
 // applies migrations and sets the two secrets. Run with `bun run setup`.
+// `bun run setup --cloud` is for hosted mode: no owner password, only SESSION_SECRET.
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { hashPassword } from "../src/worker/auth";
@@ -43,14 +44,18 @@ async function readHidden(question: string): Promise<string> {
   });
 }
 
-console.log("Lanternfish setup\n");
+const cloud = process.argv.includes("--cloud");
+console.log(cloud ? "Lanternfish setup (hosted mode)\n" : "Lanternfish setup\n");
 
 if (!wrangler(["whoami"]).ok) fail("Log in first: bunx wrangler login");
 
-const pw = await readHidden("Owner password (at least 12 characters): ");
-if (pw.length < 12) fail("Use a password of at least 12 characters.");
-const again = await readHidden("Again: ");
-if (again !== pw) fail("The passwords don't match.");
+let pw = "";
+if (!cloud) {
+  pw = await readHidden("Owner password (at least 12 characters): ");
+  if (pw.length < 12) fail("Use a password of at least 12 characters.");
+  const again = await readHidden("Again: ");
+  if (again !== pw) fail("The passwords don't match.");
+}
 
 console.log("\n→ Building and deploying (this creates the D1 database on first run)…");
 if (spawnSync("bun", ["run", "build"], { stdio: "inherit" }).status !== 0) fail("Build failed.");
@@ -61,8 +66,12 @@ console.log("\n→ Applying database migrations…");
 if (!wrangler(["d1", "migrations", "apply", "lanternfish", "--remote"], "y\n").ok) fail("Migrations failed.");
 
 console.log("\n→ Setting secrets…");
-if (!wrangler(["secret", "put", "OWNER_PASSWORD_HASH"], await hashPassword(pw)).ok) fail("Couldn't set OWNER_PASSWORD_HASH.");
+if (!cloud && !wrangler(["secret", "put", "OWNER_PASSWORD_HASH"], await hashPassword(pw)).ok) fail("Couldn't set OWNER_PASSWORD_HASH.");
 if (!wrangler(["secret", "put", "SESSION_SECRET"], randomBytes(32).toString("hex")).ok) fail("Couldn't set SESSION_SECRET.");
 
 const url = /https:\/\/[^\s]+\.workers\.dev/.exec(deploy.out)?.[0];
-console.log(`\n✓ Done. Open ${url ?? "your Worker's URL"} and sign in.`);
+if (cloud) {
+  console.log(`\n✓ Done. Hosted mode needs "MODE": "cloud" under "vars" in wrangler.jsonc. Set it, run \`bun run deploy\`, then open ${url ?? "your Worker's URL"} and create the first account.`);
+} else {
+  console.log(`\n✓ Done. Open ${url ?? "your Worker's URL"} and sign in.`);
+}
