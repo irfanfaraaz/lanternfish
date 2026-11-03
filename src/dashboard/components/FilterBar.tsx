@@ -17,11 +17,11 @@ export function FilterBar({ filters, onRemove, retention }: { filters: Filters; 
   const active = Object.entries(filters) as [FilterDim, string][];
   if (!active.length) return null;
   return (
-    <div class="filters span-12" role="region" aria-label="Active filters">
+    <div class="filters" role="region" aria-label="Active filters">
       {active.map(([dim, v]) => (
         <span class="chip" key={dim}>
           <b>{NAMES[dim]}</b>
-          {dim === "country" ? countryName(v) : v}
+          <span class="chip-val">{dim === "country" ? countryName(v) : v}</span>
           <button type="button" aria-label={`Remove ${NAMES[dim]} filter`} onClick={() => onRemove(dim)}>
             <Close />
           </button>

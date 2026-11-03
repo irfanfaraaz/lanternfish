@@ -5,11 +5,11 @@ import nextProxy from "../../../snippets/nextjs/proxy.ts?raw";
 import nextRouteHandler from "../../../snippets/nextjs/route-handler.ts?raw";
 import nextRoute from "../../../snippets/nextjs/app/api/e/route.ts?raw";
 import { ATTRIBUTES, GENERIC_PROXY, NEXT_PACKAGE, curlServerEvent, envBlock, scriptTag } from "../../shared/snippets";
-import type { Site, SiteInput } from "../../shared/types";
+import type { Realtime, Site, SiteInput } from "../../shared/types";
 import { api, useApi } from "../api";
 import { Shell } from "../components/Shell";
-import { CopyButton, Disclosure, ErrorLine, Section, Skeleton, Snippet } from "../components/ui";
-import { addDays, todayIn } from "../format";
+import { ConfirmAction, CopyButton, Disclosure, ErrorLine, Section, Skeleton, Slip, Snippet, Stamp } from "../components/ui";
+import { addDays, longDay, todayIn } from "../format";
 import { Download } from "../icons";
 
 const zones = (() => {
@@ -84,7 +84,7 @@ function SiteForm({ site, onSaved }: { site?: Site; onSaved: (s: Site) => void }
         </div>
         <div class="field">
           <span class="label">Public stats</span>
-          <label class="check" style={{ minHeight: "40px" }}>
+          <label class="check tall">
             <input type="checkbox" name="public" defaultChecked={site?.public ?? false} />
             Serve totals at /p/{site?.id ?? "<site>"}
           </label>
@@ -109,11 +109,7 @@ function SiteForm({ site, onSaved }: { site?: Site; onSaved: (s: Site) => void }
         <button class="btn primary" type="submit" aria-busy={busy}>
           {busy ? "Saving…" : site ? "Save changes" : "Add site"}
         </button>
-        {saved && site && (
-          <span class="msg ok" role="status">
-            Saved.
-          </span>
-        )}
+        {saved && site && <Slip>Saved</Slip>}
       </div>
     </form>
   );
@@ -134,7 +130,7 @@ function Snippets({ site }: { site: Site }) {
           <tbody>
             {ATTRIBUTES.map(([code, what]) => (
               <tr key={code}>
-                <td style={{ width: "40%" }}>
+                <td class="attr">
                   <code>{code}</code>
                 </td>
                 <td>{what}</td>
@@ -197,7 +193,7 @@ function Keys({ site, onChange }: { site: Site; onChange: () => void }) {
   useEffect(() => setKey(site.server_key), [site.server_key]);
 
   const rotate = async () => {
-    if (!confirm("Rotate the server key? Your proxy and server snippets stop working until you update LF_SERVER_KEY.")) return;
+    setMsg(undefined);
     try {
       const r = await api.post<{ server_key: string }>(`/sites/${site.id}/rotate-key`);
       setKey(r.server_key);
@@ -217,7 +213,7 @@ function Keys({ site, onChange }: { site: Site; onChange: () => void }) {
     }
   };
   const revoke = async () => {
-    if (!confirm("Revoke every share link for this site? Anyone using one loses access.")) return;
+    setMsg(undefined);
     try {
       await api.post(`/sites/${site.id}/share/revoke`);
       setShareUrl(undefined);
@@ -234,20 +230,30 @@ function Keys({ site, onChange }: { site: Site; onChange: () => void }) {
         <span class="label">Server key</span>
         <div class="keybox">
           <code>{shown ? key : "•".repeat(32)}</code>
-          <button type="button" class="btn quiet" onClick={() => setShown(!shown)}>
-            {shown ? "Hide" : "Reveal"}
-          </button>
-          {shown && <CopyButton text={key} />}
-          <button type="button" class="btn danger" onClick={rotate}>
-            Rotate
-          </button>
+          <div class="actions">
+            <button type="button" class="btn quiet" onClick={() => setShown(!shown)} aria-pressed={shown}>
+              {shown ? "Hide" : "Reveal"}
+            </button>
+            {shown && <CopyButton text={key} />}
+            <ConfirmAction
+              label="Rotate key"
+              confirmLabel="Rotate now"
+              busyLabel="Rotating…"
+              warning={
+                <>
+                  Your proxy and server snippets stop working until you update <code>LF_SERVER_KEY</code>.
+                </>
+              }
+              onConfirm={rotate}
+            />
+          </div>
         </div>
         <span class="hint">Signs proxied beacons and authorises server events. Keep it out of client code.</span>
       </div>
       <div class="field">
-        <span class="label">Read-only share link</span>
+        <label for="share-days">Read-only share link</label>
         <div class="actions">
-          <select class="date" value={days} onChange={(e) => setDays((e.target as HTMLSelectElement).value)} aria-label="Link expires">
+          <select id="share-days" class="control" value={days} onChange={(e) => setDays((e.target as HTMLSelectElement).value)}>
             <option value="7">Expires in 7 days</option>
             <option value="30">Expires in 30 days</option>
             <option value="90">Expires in 90 days</option>
@@ -256,17 +262,20 @@ function Keys({ site, onChange }: { site: Site; onChange: () => void }) {
           <button type="button" class="btn" onClick={share}>
             Create link
           </button>
-          <button type="button" class="btn quiet" onClick={revoke}>
-            Revoke all links
-          </button>
         </div>
         {shareUrl && (
           <div class="keybox">
             <code>{shareUrl}</code>
-            <CopyButton text={shareUrl} />
+            <div class="actions">
+              <Stamp tone="primary">{days === "never" ? "No expiry" : `${days} days`}</Stamp>
+              <CopyButton text={shareUrl} />
+            </div>
           </div>
         )}
         <span class="hint">Anyone with the link sees this site's overview and realtime count, nothing else.</span>
+        <div class="actions">
+          <ConfirmAction label="Revoke all links" confirmLabel="Revoke all" warning="Anyone using a share link for this site loses access." onConfirm={revoke} />
+        </div>
       </div>
       {site.public && (
         <div class="field">
@@ -277,18 +286,13 @@ function Keys({ site, onChange }: { site: Site; onChange: () => void }) {
           </div>
         </div>
       )}
-      {msg && (
-        <p class="msg ok" role="status">
-          {msg}
-        </p>
-      )}
+      {msg && <Slip>{msg}</Slip>}
       {error && <ErrorLine message={error} />}
     </div>
   );
 }
 
 function Data({ site }: { site: Site }) {
-  const { route } = useLocation();
   const today = todayIn(site.timezone);
   const [from, setFrom] = useState(addDays(today, -29));
   const [to, setTo] = useState(today);
@@ -297,20 +301,11 @@ function Data({ site }: { site: Site }) {
   const [error, setError] = useState<string>();
 
   const deleteBefore = async () => {
-    if (!confirm(`Delete all of ${site.name}'s data before ${before}? This can't be undone.`)) return;
+    setMsg(undefined);
+    setError(undefined);
     try {
       await api.del(`/sites/${site.id}/data?before=${before}`);
-      setMsg(`Deleted data before ${before}.`);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  };
-  const deleteSite = async () => {
-    const typed = prompt(`This deletes ${site.name} and all its data. Type the site name to confirm.`);
-    if (typed !== site.name) return;
-    try {
-      await api.del(`/sites/${site.id}`);
-      route("/");
+      setMsg(`Deleted data before ${longDay(before)}.`);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -319,10 +314,12 @@ function Data({ site }: { site: Site }) {
   return (
     <div class="form">
       <div class="field">
-        <span class="label">Export raw events as CSV</span>
-        <div class="actions">
-          <input class="date" type="date" value={from} max={to} aria-label="From" onChange={(e) => setFrom((e.target as HTMLInputElement).value)} />
-          <input class="date" type="date" value={to} min={from} aria-label="To" onChange={(e) => setTo((e.target as HTMLInputElement).value)} />
+        <span class="label" id="export-label">
+          Export raw events as CSV
+        </span>
+        <div class="actions" role="group" aria-labelledby="export-label">
+          <input class="control date" type="date" value={from} max={to} aria-label="From" onChange={(e) => setFrom((e.target as HTMLInputElement).value)} />
+          <input class="control date" type="date" value={to} min={from} aria-label="To" onChange={(e) => setTo((e.target as HTMLInputElement).value)} />
           <a class="btn" href={`/api/sites/${site.id}/export.csv?from=${from}&to=${to}`} download>
             <Download />
             Download CSV
@@ -330,55 +327,163 @@ function Data({ site }: { site: Site }) {
         </div>
         <span class="hint">Up to 400,000 rows per download. Raw events are kept for the retention window; older days exist only as daily totals.</span>
       </div>
-      <div class="field danger-zone" style={{ paddingTop: "16px" }}>
-        <span class="label">Delete data before a date</span>
+      <div class="field">
+        <label for="del-before">Delete data before a date</label>
         <div class="actions">
-          <input class="date" type="date" value={before} max={today} aria-label="Delete before" onChange={(e) => setBefore((e.target as HTMLInputElement).value)} />
-          <button type="button" class="btn danger" onClick={deleteBefore}>
-            Delete data
-          </button>
-          <button type="button" class="btn danger" onClick={deleteSite}>
-            Delete site
-          </button>
+          <input id="del-before" class="control date" type="date" value={before} max={today} onChange={(e) => setBefore((e.target as HTMLInputElement).value)} />
+          <ConfirmAction
+            label="Delete data"
+            confirmLabel="Delete it"
+            busyLabel="Deleting…"
+            warning={
+              <>
+                Every raw event and daily total for {site.name} recorded before <b>{longDay(before)}</b> goes. This can't be undone.
+              </>
+            }
+            onConfirm={deleteBefore}
+          />
         </div>
       </div>
-      {msg && (
-        <p class="msg ok" role="status">
-          {msg}
-        </p>
-      )}
+      {msg && <Slip>{msg}</Slip>}
       {error && <ErrorLine message={error} />}
     </div>
   );
 }
+
+/** Type-to-confirm, inline, with an error when the name doesn't match. */
+function DeleteSite({ site }: { site: Site }) {
+  const { route } = useLocation();
+  const [typed, setTyped] = useState("");
+  const [tried, setTried] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const matches = typed.trim() === site.name;
+
+  const submit = async (e: Event) => {
+    e.preventDefault();
+    setTried(true);
+    if (!matches) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await api.del(`/sites/${site.id}`);
+      route("/");
+    } catch (err) {
+      setError((err as Error).message);
+      setBusy(false);
+    }
+  };
+
+  const wrong = tried && !matches;
+  return (
+    <form class="form" onSubmit={submit} noValidate>
+      <p class="note">
+        This deletes <b>{site.name}</b>, its settings, keys, share links and every event and daily total. The script tag on your site stops counting. It can't be undone.
+      </p>
+      <div class="field" data-invalid={wrong ? "" : undefined}>
+        <label for="del-site">
+          Type <b>{site.name}</b> to confirm
+        </label>
+        <input
+          id="del-site"
+          autoComplete="off"
+          spellcheck={false}
+          value={typed}
+          onInput={(e) => setTyped((e.target as HTMLInputElement).value)}
+          aria-invalid={wrong}
+          aria-describedby={wrong ? "del-site-err" : undefined}
+        />
+        {wrong && (
+          <span id="del-site-err" class="hint error">
+            That doesn't match the site name. Type it exactly, including capitals.
+          </span>
+        )}
+      </div>
+      {error && <ErrorLine message={error} />}
+      <div class="actions">
+        <button class="btn danger solid" type="submit" aria-busy={busy}>
+          {busy ? "Deleting…" : "Delete site"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/**
+ * Right after "Add site": listens for the first visit so the new owner knows the line works.
+ * Polls the realtime count (no new endpoint) until something arrives, then stops.
+ */
+function FirstVisit({ id }: { id: string }) {
+  const [seen, setSeen] = useState(false);
+  const live = useApi<Realtime>(seen ? null : `/sites/${id}/realtime`, 15_000);
+  useEffect(() => {
+    if (live.data && live.data.visitors > 0) setSeen(true);
+  }, [live.data]);
+  return seen ? (
+    <span class="first-visit" role="status">
+      <Stamp tone="good">Counting</Stamp>
+      <span>First visit received. You're set up.</span>
+    </span>
+  ) : (
+    <span class="first-visit">
+      <Stamp tone="wait">Listening</Stamp>
+      <span>Open your site in another tab; the first visit shows here.</span>
+    </span>
+  );
+}
+
+const PARTS = [
+  { id: "install", label: "Install" },
+  { id: "site", label: "Site" },
+  { id: "keys", label: "Keys and sharing" },
+  { id: "data", label: "Data" },
+  { id: "danger", label: "Delete site" },
+] as const;
 
 export function Settings({ id }: { id: string }) {
   const site = useApi<Site>(`/sites/${id}`);
   const fresh = new URLSearchParams(location.search).has("new");
   return (
     <Shell siteId={id}>
-      <div class="head grid">
-        <div class="span-7">
+      <div class="head">
+        <div class="head-title">
           <h1>{site.data?.name ?? " "}</h1>
           <p class="sub">{fresh ? "Site added. Add the line below to your site to start counting." : "Settings"}</p>
         </div>
       </div>
       {site.error && <ErrorLine message={site.error} retry={site.reload} />}
-      {!site.data && !site.error && <Skeleton lines={6} />}
+      {!site.data && !site.error && (
+        <div class="panel pad">
+          <Skeleton lines={6} />
+        </div>
+      )}
       {site.data && (
-        <div class="grid">
-          <Section title="Install" span={7}>
-            <Snippets site={site.data} />
-          </Section>
-          <div class="span-5" style={{ display: "grid", alignContent: "start" }}>
-            <Section title="Site" span={12}>
+        <div class="settings">
+          <nav class="settings-index" aria-label="Settings sections">
+            <ul>
+              {PARTS.map((p) => (
+                <li key={p.id}>
+                  <a href={`#${p.id}`}>{p.label}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div class="settings-body">
+            <Section title="Install" span={12} id="install" meta={fresh ? <Stamp tone="primary">Next step</Stamp> : undefined}>
+              {fresh && <FirstVisit id={site.data.id} />}
+              <Snippets site={site.data} />
+            </Section>
+            <Section title="Site" span={12} id="site">
               <SiteForm key={site.data.id} site={site.data} onSaved={() => site.reload()} />
             </Section>
-            <Section title="Keys and sharing" span={12}>
+            <Section title="Keys and sharing" span={12} id="keys">
               <Keys site={site.data} onChange={site.reload} />
             </Section>
-            <Section title="Data" span={12}>
+            <Section title="Data" span={12} id="data">
               <Data site={site.data} />
+            </Section>
+            <Section title="Delete site" span={12} id="danger" tone="danger">
+              <DeleteSite site={site.data} />
             </Section>
           </div>
         </div>
@@ -391,14 +496,14 @@ export function NewSite() {
   const { route } = useLocation();
   return (
     <Shell>
-      <div class="head grid">
-        <div class="span-7">
+      <div class="head">
+        <div class="head-title">
           <h1>Add a site</h1>
           <p class="sub">You'll get a script tag to paste into it next.</p>
         </div>
       </div>
-      <div class="grid">
-        <Section title="Site" span={7}>
+      <div class="narrow">
+        <Section title="Site" span={12}>
           <SiteForm onSaved={(s) => route(`/s/${s.id}/settings?new=1`)} />
         </Section>
       </div>

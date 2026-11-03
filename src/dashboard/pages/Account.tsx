@@ -2,7 +2,7 @@ import { useState } from "preact/hooks";
 import type { Me, Usage } from "../../shared/types";
 import { api, useApi } from "../api";
 import { Shell } from "../components/Shell";
-import { ErrorLine, Section, Skeleton } from "../components/ui";
+import { ErrorLine, Section, Skeleton, Slip } from "../components/ui";
 import { num } from "../format";
 
 function ChangePassword() {
@@ -50,11 +50,7 @@ function ChangePassword() {
         <button class="btn primary" type="submit" aria-busy={busy}>
           {busy ? "Saving…" : "Change password"}
         </button>
-        {done && (
-          <span class="msg ok" role="status">
-            Password changed.
-          </span>
-        )}
+        {done && <Slip>Password changed</Slip>}
       </div>
     </form>
   );
@@ -85,7 +81,9 @@ function DeleteAccount({ email }: { email: string }) {
     <form class="form" onSubmit={submit}>
       <p class="note">This deletes your account, your sites and all their data. It can't be undone.</p>
       <div class="field">
-        <label for="del-email">Type {email} to confirm</label>
+        <label for="del-email">
+          Type <b>{email}</b> to confirm
+        </label>
         <input id="del-email" name="confirm" type="email" autoComplete="off" value={typed} onInput={(e) => setTyped((e.target as HTMLInputElement).value)} />
       </div>
       <div class="field">
@@ -98,7 +96,7 @@ function DeleteAccount({ email }: { email: string }) {
         </p>
       )}
       <div class="actions">
-        <button class="btn danger" type="submit" disabled={!matches || busy} aria-busy={busy}>
+        <button class="btn danger solid" type="submit" disabled={!matches || busy} aria-busy={busy}>
           {busy ? "Deleting…" : "Delete account"}
         </button>
       </div>
@@ -113,33 +111,56 @@ export function Account() {
 
   return (
     <Shell>
-      <div class="head grid">
-        <div class="span-7">
+      <div class="head">
+        <div class="head-title">
           <h1>Account</h1>
           {me.data && <p class="sub">{cloud ? me.data.email : "Accounts are only used in cloud mode."}</p>}
         </div>
       </div>
       {me.error && <ErrorLine message={me.error} retry={me.reload} />}
-      {!me.data && !me.error && <Skeleton />}
+      {!me.data && !me.error && (
+        <div class="panel pad">
+          <Skeleton />
+        </div>
+      )}
       {cloud && me.data && (
-        <div class="grid">
+        <div class="grid cards">
           <Section title="Today" span={6} meta="UTC">
             {usage.error ? (
               <ErrorLine message={usage.error} retry={usage.reload} />
             ) : !usage.data ? (
               <Skeleton lines={2} />
             ) : (
-              <p>
-                {num(usage.data.events)}
-                {me.data.limits ? ` of ${num(me.data.limits.events)}` : ""} events, {num(usage.data.rows_read)}
-                {me.data.limits ? ` of ${num(me.data.limits.reads)}` : ""} reads.
-              </p>
+              <dl class="ledger">
+                <div>
+                  <dt>Events</dt>
+                  <dd>
+                    <span class="n">{num(usage.data.events)}</span>
+                    {me.data.limits && <span class="of"> of {num(me.data.limits.events)}</span>}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Reads</dt>
+                  <dd>
+                    <span class="n">{num(usage.data.rows_read)}</span>
+                    {me.data.limits && <span class="of"> of {num(me.data.limits.reads)}</span>}
+                  </dd>
+                </div>
+                {me.data.limits && (
+                  <div>
+                    <dt>Sites allowed</dt>
+                    <dd>
+                      <span class="n">{num(me.data.limits.sites)}</span>
+                    </dd>
+                  </div>
+                )}
+              </dl>
             )}
           </Section>
           <Section title="Change password" span={6}>
             <ChangePassword />
           </Section>
-          <Section title="Delete account" span={6}>
+          <Section title="Delete account" span={6} tone="danger">
             <DeleteAccount email={me.data.email!} />
           </Section>
         </div>

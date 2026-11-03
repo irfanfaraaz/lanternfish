@@ -1,87 +1,118 @@
 ---
 name: Lanternfish
-description: Cookieless analytics dashboard set like a Swiss timetable.
+description: Cookieless analytics dashboard kept like a field notebook, on parchment in navy ink.
 colors:
-  paper: "#f5f5f2"
-  paper-2: "#ebebe6"
-  ink: "#111110"
-  ink-2: "#4a4a46"
-  ink-3: "#6e6e68"
-  rule: "#d4d4cd"
-  rule-strong: "#111110"
-  grid: "rgb(17 17 16 / 0.06)"
-  red: "#e5231b"
-  red-ink: "#b81810"
-  red-wash: "rgb(229 35 27 / 0.1)"
-  red-solid: "#e01f17"
-  red-solid-hover: "#b81810"
-  on-red: "#ffffff"
-  band: "#111110"
-  band-rule: "#333331"
-  band-ink: "#f5f5f2"
-  band-ink-2: "#a3a39b"
-  good: "#1d7a46"
-  warn: "#9a6200"
-  bad: "#c41a12"
-  focus: "#e5231b"
+  parchment: "#f5f4ed"
+  paper: "#fbfaf5"
+  ink: "#1a2030"
+  ink-soft: "#5b6070"
+  carrier-navy: "#1f3d7a"
+  on-navy: "#ffffff"
+  fog: "#e9e7dd"
+  muted-paper: "#ebe9e0"
+  danger-red: "#b02616"
+  on-danger: "#ffffff"
+  good-green: "#17663a"
+  wait-amber: "#8c4d08"
+  rule: "#dcd9cd"
+  field-rule: "#85816f"
+  chart-violet: "#6b55b8"
+  parchment-dark: "#15171c"
+  paper-dark: "#1c1f26"
+  ink-dark: "#eeede6"
+  ink-soft-dark: "#a4a8b1"
+  carrier-navy-dark: "#8aa8e6"
+  on-navy-dark: "#0a1530"
+  fog-dark: "#262a33"
+  danger-red-dark: "#f0786b"
+  on-danger-dark: "#1a0705"
+  good-green-dark: "#5fcf8a"
+  wait-amber-dark: "#f2b54a"
+  rule-dark: "#2f343e"
+  field-rule-dark: "#6b7381"
+  chart-violet-dark: "#a996e8"
 typography:
   display:
-    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "clamp(4rem, 12vw, 9rem)"
-    fontWeight: 700
-    lineHeight: 0.9
-    letterSpacing: "-0.05em"
-    fontFeature: "\"ss01\", \"tnum\""
-  headline:
-    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "3rem"
-    fontWeight: 700
+    fontFamily: "Source Serif 4, ui-serif, Georgia, serif"
+    fontSize: "clamp(3.5rem, 8vw, 6rem)"
+    fontWeight: 600
+    lineHeight: 0.95
+    letterSpacing: "-0.025em"
+  heading:
+    fontFamily: "Source Serif 4, ui-serif, Georgia, serif"
+    fontSize: "1.875rem"
+    fontWeight: 600
+    lineHeight: 1.25
+    letterSpacing: "-0.012em"
+  band:
+    fontFamily: "Source Serif 4, ui-serif, Georgia, serif"
+    fontSize: "1.5rem"
+    fontWeight: 600
+    lineHeight: 1.25
+    letterSpacing: "-0.012em"
+  wordmark:
+    fontFamily: "Source Serif 4, ui-serif, Georgia, serif"
+    fontSize: "1.375rem"
+    fontWeight: 600
     lineHeight: 1
-    letterSpacing: "-0.035em"
-    fontFeature: "\"ss01\", \"tnum\""
-  figure:
-    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "3rem"
-    fontWeight: 650
-    lineHeight: 1.05
-    letterSpacing: "-0.04em"
-    fontFeature: "\"ss01\", \"tnum\""
+    letterSpacing: "-0.012em"
   title:
-    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Source Serif 4, ui-serif, Georgia, serif"
     fontSize: "1.125rem"
-    fontWeight: 650
-    letterSpacing: "-0.015em"
-    fontFeature: "\"ss01\", \"tnum\""
-  section:
-    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.9375rem"
-    fontWeight: 700
-    letterSpacing: "-0.01em"
-    fontFeature: "\"ss01\", \"tnum\""
+    fontWeight: 600
+    lineHeight: 1.375
+    letterSpacing: "-0.012em"
   body:
     fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.9375rem"
+    fontSize: "0.875rem"
     fontWeight: 400
     lineHeight: 1.5
-    fontFeature: "\"ss01\", \"tnum\""
   body-sm:
     fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.8125rem"
     fontWeight: 400
     lineHeight: 1.5
-    fontFeature: "\"ss01\", \"tnum\""
   label:
     fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.75rem"
-    fontWeight: 600
-    letterSpacing: "0.02em"
-    fontFeature: "\"ss01\", \"tnum\""
-  mono:
+    fontSize: "0.6875rem"
+    fontWeight: 500
+    lineHeight: 1.2
+    letterSpacing: "0.08em"
+  figure:
     fontFamily: "Geist Mono Variable, ui-monospace, SF Mono, Menlo, monospace"
-    fontSize: "0.92em"
-    fontWeight: 400
+    fontSize: "1.875rem"
+    fontWeight: 600
+    lineHeight: 1.1
+    letterSpacing: "-0.025em"
+    fontFeature: "\"tnum\""
+  figure-inline:
+    fontFamily: "Geist Mono Variable, ui-monospace, SF Mono, Menlo, monospace"
+    fontSize: "1.25rem"
+    fontWeight: 600
+    lineHeight: 1.2
+    fontFeature: "\"tnum\""
+  figure-live:
+    fontFamily: "Geist Mono Variable, ui-monospace, SF Mono, Menlo, monospace"
+    fontSize: "clamp(3.5rem, 8vw, 5.5rem)"
+    fontWeight: 600
+    lineHeight: 1
+    letterSpacing: "-0.04em"
+  stamp:
+    fontFamily: "Geist Mono Variable, ui-monospace, SF Mono, Menlo, monospace"
+    fontSize: "0.6875rem"
+    fontWeight: 700
+    lineHeight: 1.2
+    letterSpacing: "0.08em"
 rounded:
-  none: "0"
+  stamp: "2px"
+  sm: "4.8px"
+  md: "6.4px"
+  base: "8px"
+  pill: "999px"
+  sketch-btn: "225px 12px 255px 12px / 12px 255px 12px 225px"
+  sketch-card: "40px 10px 36px 10px / 10px 36px 10px 40px"
+  sketch-panel: "28px 8px 24px 8px / 8px 24px 8px 28px"
+  sketch-stat: "255px 14px 225px 14px / 14px 225px 14px 255px"
 spacing:
   s-1: "4px"
   s-2: "8px"
@@ -91,311 +122,295 @@ spacing:
   s-6: "32px"
   s-7: "48px"
   s-8: "64px"
+  card-pad: "20px"
+  card-pad-sm: "12px"
+  page-x: "40px"
+  page-y: "36px"
+  section-gap: "32px"
   gutter: "24px"
-  margin: "32px"
+  target: "40px"
+  target-touch: "44px"
 components:
-  button:
-    backgroundColor: "transparent"
-    textColor: "{colors.ink}"
-    typography: "{typography.body-sm}"
-    rounded: "{rounded.none}"
-    padding: "0 16px"
-    height: "36px"
-  button-hover:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.paper}"
   button-primary:
-    backgroundColor: "{colors.red-solid}"
-    textColor: "{colors.on-red}"
+    backgroundColor: "{colors.carrier-navy}"
+    textColor: "{colors.on-navy}"
     typography: "{typography.body-sm}"
-    rounded: "{rounded.none}"
+    rounded: "{rounded.sketch-btn}"
     padding: "0 16px"
-    height: "36px"
-  button-primary-hover:
-    backgroundColor: "{colors.red-solid-hover}"
-    textColor: "{colors.on-red}"
+    height: "40px"
+  button-secondary:
+    backgroundColor: "{colors.fog}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.sketch-btn}"
+    padding: "0 16px"
+    height: "40px"
+  button-secondary-hover:
+    backgroundColor: "{colors.muted-paper}"
   button-quiet:
-    backgroundColor: "transparent"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.none}"
-    padding: "0 16px"
-    height: "36px"
-  button-danger:
-    backgroundColor: "transparent"
-    textColor: "{colors.bad}"
-    rounded: "{rounded.none}"
-    padding: "0 16px"
-    height: "36px"
-  button-danger-hover:
-    backgroundColor: "{colors.bad}"
-    textColor: "#ffffff"
-  segment:
-    backgroundColor: "transparent"
+    backgroundColor: "{colors.paper}"
     textColor: "{colors.ink}"
     typography: "{typography.body-sm}"
-    rounded: "{rounded.none}"
+    rounded: "{rounded.md}"
+    padding: "0 16px"
+    height: "40px"
+  button-danger:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.danger-red}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.md}"
+    padding: "0 16px"
+    height: "40px"
+  button-danger-solid:
+    backgroundColor: "{colors.danger-red}"
+    textColor: "{colors.on-danger}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.sketch-btn}"
+    padding: "0 16px"
+    height: "40px"
+  segment:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink-soft}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.sm}"
     padding: "0 12px"
-    height: "34px"
-  segment-hover:
-    backgroundColor: "{colors.paper-2}"
+    height: "32px"
   segment-pressed:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.paper}"
+    backgroundColor: "{colors.carrier-navy}"
+    textColor: "{colors.on-navy}"
   input:
     backgroundColor: "{colors.paper}"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
-    rounded: "{rounded.none}"
+    rounded: "{rounded.md}"
     padding: "8px 12px"
     height: "40px"
+  card:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sketch-card}"
+    padding: "{spacing.card-pad}"
+  stat-tile:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    typography: "{typography.figure}"
+    rounded: "{rounded.sketch-stat}"
+    padding: "{spacing.card-pad}"
+  panel:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sketch-panel}"
+    padding: "{spacing.card-pad}"
   chip:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.paper}"
+    backgroundColor: "{colors.fog}"
+    textColor: "{colors.ink}"
     typography: "{typography.body-sm}"
-    rounded: "{rounded.none}"
-    padding: "0 4px 0 12px"
-    height: "30px"
-  band:
-    backgroundColor: "{colors.band}"
-    textColor: "{colors.band-ink}"
-    padding: "0 32px"
-    height: "52px"
-  tab:
-    textColor: "{colors.band-ink-2}"
-    typography: "{typography.body-sm}"
-    padding: "0 12px"
+    rounded: "{rounded.base}"
+    padding: "0 2px 0 12px"
+    height: "36px"
+  stamp-good:
+    textColor: "{colors.good-green}"
+    typography: "{typography.stamp}"
+    rounded: "{rounded.stamp}"
+    padding: "2px 6px 1px"
+  stamp-wait:
+    textColor: "{colors.wait-amber}"
+    typography: "{typography.stamp}"
+    rounded: "{rounded.stamp}"
+    padding: "2px 6px 1px"
+  stamp-bad:
+    textColor: "{colors.danger-red}"
+    typography: "{typography.stamp}"
+    rounded: "{rounded.stamp}"
+    padding: "2px 6px 1px"
   tab-active:
-    textColor: "{colors.band-ink}"
+    textColor: "{colors.carrier-navy}"
+    typography: "{typography.body}"
+    height: "40px"
 ---
 
 # Design System: Lanternfish
 
 ## Overview
 
-**Creative North Star: "The Swiss Timetable"**
+**Creative North Star: "The Field Notebook"**
 
-Lanternfish reads like a departures board printed on paper: a visible 12-column grid, flush-left type, and numbers that line up in tabular columns. Every screen leads with a figure. Structure comes from 1px hairlines and the drawn column grid, never from boxes, so the page stays a single continuous sheet rather than a wall of tiles.
+Lanternfish is kept like a naturalist's notebook: a parchment ground, slightly lighter paper cards drawn by hand with a 2px ink line, ink text, and one Carrier Navy ink for anything you can act on. Titles are set in a book serif, every number is set in a mono, and a status is a rubber stamp. It is the look of Mailrust Field Notes, adapted for an analytics dashboard: same materials, Lanternfish's own wordmark, no sidebar.
 
-The palette is paper and ink with one Swiss red. Red marks exactly what is current: the live series, the selected tab, the focused field, the primary action, the length of a ranked bar. Grey ink carries the previous period. Light and dark follow the system setting with the same roles unless the lantern switch in the band pins one; in dark the paper becomes night ink and the red brightens. Every color token is a `light-dark()` pair, so a theme is only a `color-scheme`. From 1600px wide the whole sheet scales by `zoom` (1.125, then 1.25 from 2200px), so type, spacing, controls and the 1440px page grow together on large monitors.
+It is an Operate surface. The notebook character lives in materials (the uneven card edge, the hard ink-offset shadow, the stamp) and never in the way of reading numbers. Density is moderate: the overview reads as a page header, four stat tiles, the chart, then three chapters (Traffic, Audience, Behaviour and health).
 
-Density is high but calm. Type is one family, Geist, at a ~1.2 ratio, set tight at the large sizes and sentence case everywhere. Motion is short state change, not choreography.
+It replaces the earlier "Swiss timetable" look (black band, one red, square corners, a sans everywhere). That look is the anti-reference: no black band, no red as decoration, no ruled column grid.
 
 **Key Characteristics:**
 
-- A black top band, then the paper sheet on a 12-column grid with 24px gutters.
-
-- The column grid is drawn as faint hairlines behind the figure band and the chart.
-
-- Square corners on every control (0 radius); 1px hairlines; no elevation shadows.
-
-- One accent, red, reserved for "current" and "act".
-
-- Geist with tabular figures and stylistic set 01 on the root; Geist Mono only for code, keys and ids.
+- Parchment page, paper cards with a 2px ink sketch border and uneven corners, a hard offset shadow, never a blurred one.
+- Carrier Navy is the only action colour: primary buttons, links, focus, the selected tab, the views series, share bars, native controls.
+- Red, amber and green mean danger, waiting and done. They never decorate.
+- Source Serif 4 for titles and the wordmark, Geist for prose and controls, Geist Mono for every number and every stamp.
+- Light and dark themes, both verified at WCAG AA, switched by the lantern in the top bar (system, light, dark).
 
 ## Colors
 
-Warm-neutral paper and ink (hue ~107, near zero chroma) with a single saturated red.
+A warm, low-chroma parchment and ink pair with one deep navy. Dark mode lifts navy to a pale periwinkle and paper to a dark slate; it is composed, not inverted. Each token is a `light-dark()` pair in `src/dashboard/styles/tokens.css`; the `-dark` keys above are the dark halves.
 
 ### Primary
 
-- **Swiss Red** (`red`): the current series line and its fill, the active tab underline, the ranked-bar rule, the caret, the checkbox accent, the live pulse. In dark it becomes #ff4a3d.
+- **Carrier Navy** (`carrier-navy` / `carrier-navy-dark`): primary buttons, links, the focus ring (drawn at full strength, 2px with a 2px offset), the active tab and its underline, the pressed range segment, the views series and its 10% area wash, bar-list share bars, the funnel fill, checkboxes (`accent-color`), the caret and text selection. Text on it is `on-navy` (10.46:1 light, 7.59:1 dark).
 
-- **Solid Red** (`red-solid`, hover `red-solid-hover`): every red surface that carries white text (`on-red`): the primary button, text selection, the chip's remove hover. Tuned for 4.5:1 with white in both themes (dark #cc1a10, hover #a8150d), because the brighter line red fails under white text.
+### Secondary
 
-- **Pressed Red** (`red-ink`): red text on paper where it must read as text. In dark #ff6b60.
-
-- **Red Wash** (`red-wash`): the area fill under the current series. Never used as a surface for text.
+- **Chart Violet** (`chart-violet`): reserved fourth chart series. Not used on a current screen.
 
 ### Neutral
 
-- **Paper** (`paper`): the page ground and field fill. Dark: night ink #0f0f0e.
+- **Parchment** (`parchment`): the page ground and the top bar.
+- **Paper** (`paper`): every card, tile, panel, input, the quiet button and the stamp's ground.
+- **Ink** (`ink`): text, the 2px sketch border on every card and the primary/secondary button, the visitors series, the chart baseline. 14.7:1 on parchment.
+- **Ink Soft** (`ink-soft`): labels, meta, hints, axis text, the previous-period dashed line, placeholders. 5.68:1 on parchment light, 7.53:1 dark.
+- **Fog** (`fog`) and **Muted Paper** (`muted-paper`): the secondary button fill, chips, hover fills on rows and controls, code wells and key boxes.
+- **Rule** (`rule`): dashed dividers and grid lines only. Below 3:1 on purpose; it never carries meaning.
+- **Field Rule** (`field-rule`): 1.5px input and quiet-button borders, kbd keys. 3.74:1 on paper light, 3.45:1 dark.
 
-- **Paper Shade** (`paper-2`): tonal wells only, for code blocks, key boxes, funnel tracks, skeletons and segment hover. Dark #181816.
+### Meaning
 
-- **Ink** (`ink`): primary text, the pressed segment, chips, the secondary series line. Dark #ededea.
+- **Good Green** (`good-green`): a better delta, Good vitals, the Counting stamp, a confirmation slip's tick.
+- **Wait Amber** (`wait-amber`): Needs work vitals, the Busy budget stamp (from 60%), the Listening stamp.
+- **Danger Red** (`danger-red`): a worse delta, Poor vitals, errors, destructive outlines, the filled delete buttons (with `on-danger`), the Near limit stamp (from 80%).
 
-- **Ink Two** (`ink-2`): labels, table headers, secondary copy. Dark #b4b4ad.
+### Contrast fixes against Field Notes as shipped
 
-- **Ink Three** (`ink-3`): meta text, axis labels, hints, the previous-period line and the neutral delta. Dark #8c8c85.
+| Pair | Shipped | Lanternfish value | Now |
+|---|---|---|---|
+| Input border on paper | #c8c5b8 / #3a404b (1.66 / 1.58) | #85816f / #6b7381 | 3.74 / 3.45 |
+| Focus ring on parchment | primary at 50% (2.61 / 2.84) | primary at 100% | 9.49 / 7.53 |
+| Good on muted (light) | #1d7a43 (4.32 on fog) | #17663a | 5.76 muted, 6.70 paper |
+| Wait on muted (light) | #a35a0a (4.21 on fog) | #8c4d08 | 5.43 muted, 6.32 paper |
+| Destructive on fog (light) | #c42b1c (4.57) | #b02616 | 5.40 fog, 6.41 paper |
+| Text on filled danger (dark) | white on #f0786b (2.76) | #1a0705 on #f0786b | 7.06 |
 
-- **Hairline** (`rule`): every row divider, figure divider and quiet border. Dark #2c2c29.
+**The One Ink Rule.** Navy is the only colour that means "you can act here" or "this is selected". If a new element wants navy and is not an action, selection or the primary series, it is wrong.
 
-- **Strong Rule** (`rule-strong`): the rule that opens a block (figure band top, section header underline, sites list top, chart baseline) and the outline of buttons and segments. It equals ink in both themes.
-
-- **Column Rule** (`grid`): the drawn column grid, ink at 6% (5% in dark).
-
-- **Band Black** (`band`), **Band Ink** (`band-ink`), **Band Grey** (`band-ink-2`): the top band, its active text and its idle text. Dark band is pure #000.
-
-### Status
-
-- **Good** (`good`), **Warn** (`warn`), **Bad** (`bad`): deltas, Web Vitals ratings (each also marked by shape: filled square, hollow square, bar), the usage meter (warn from 60%, red from 80%), messages, the danger button and the danger-zone rule. Dark #4cc27f, #e0a53a, #ff6b60. Bad sits near red in hue; it is reserved for errors and destructive actions and is always paired with words.
-
-### Named Rules
-
-**The One Red Rule.** Red means "current" or "act". If an element is neither the live series, the selection, the focus, nor the primary action, it is not red.
-
-**The Previous Is Grey Rule.** Comparison data is drawn in ink-3, dashed (4 4), never in a second hue.
+**The Meaning Rule.** Red, amber and green appear only when something is bad, waiting or good. A status that is merely a label (Live, Next step, an expiry) is a navy or ink stamp.
 
 ## Typography
 
-**Display Font:** Geist Variable (with ui-sans-serif, system-ui)
+**Title Font:** Source Serif 4 (Google Fonts, `opsz,wght@8..60,600`, `display=swap`), falling back to Georgia.
+**Body Font:** Geist Variable (bundled via @fontsource-variable).
+**Number Font:** Geist Mono Variable (bundled), tabular figures.
 
-**Body Font:** Geist Variable
-
-**Label/Mono Font:** Geist Mono Variable (with ui-monospace, SF Mono, Menlo), code, keys and ids only
-
-**Character:** One grotesk carrying everything, from 9rem live counts to 11px axis labels. Large sizes tighten hard (-0.035em to -0.05em); small sizes sit at normal or slightly open tracking.
+Three families, each with one job. The serif gives the notebook voice to titles only; the sans carries prose and controls at a dense 14px; the mono makes numbers line up and read as measurements.
 
 ### Hierarchy
 
-- **Display** (700, clamp 4rem to 9rem, 0.9): the realtime visitor count. The login wordmark is its sibling (750, clamp 4rem to 9rem, 0.88, the full stop in red).
+- **Display** (600, `clamp(3.5rem, 8vw, 6rem)`, 0.95): the sign-in "Lantern / fish." mark only. Its full stop is navy.
+- **Heading** (600, 1.875rem, 1.25): page titles (site name, Sites, Account).
+- **Band** (600, 1.5rem): the overview's chapter headings, followed by a dashed rule to the edge.
+- **Wordmark** (600, 1.375rem): "Lanternfish" in the top bar; 1.25rem on phones.
+- **Title** (600, 1.125rem): card titles, the Right now card, About these numbers. Snippet and disclosure titles step down to 1rem.
+- **Body** (400, 0.875rem, 1.5): everything else. Prose is capped at 65ch and wraps `pretty`; headings wrap `balance`.
+- **Label** (500, 0.6875rem, UPPERCASE, +0.08em): field labels, card meta, table headers, tile captions, the budget label.
+- **Figure** (mono 600, 1.875rem; 1.5rem on phones): stat tiles. **Figure inline** (mono 600, 1.25rem): site-row totals, account ledger. **Figure live** (mono 600, fluid): the realtime count.
+- **Stamp** (mono 700, 0.6875rem, UPPERCASE, +0.08em).
 
-- **Headline** (700, 3rem, 1): the site name in the page head; 2.25rem below 760px.
-
-- **Figure** (650, 3rem, 1.05, tabular): the four values in the figure band; 2.25rem below 760px.
-
-- **Title** (650, 1.125rem): site names in the sites list. Its numeric sibling is 600 at 1.5rem, -0.02em.
-
-- **Section** (700, 0.9375rem, -0.01em): section headings, the same size as body, separated by weight and the strong rule beneath.
-
-- **Body** (400, 0.9375rem, 1.5): default text. Notes cap at 70ch, empty states at 52ch.
-
-- **Body Small** (0.8125rem): controls, tabs, bar keys, table cells, deltas, readouts.
-
-- **Label** (600, 0.75rem, 0.02em, sentence case): figure labels, field labels, table headers, meta.
-
-- **Axis** (11px, tabular, ink-3): chart axis labels only.
-
-### Named Rules
-
-**The Tabular Rule.** Every number that can sit beside another number is tabular (`tnum` on the root, `tabular-nums` restated on values, deltas, bars, tables and readouts).
-
-**The Sentence Case Rule.** Labels are sentence case at 0.02em. Nothing in the system is set in uppercase.
+**The Ledger Rule.** A number is always set in Geist Mono: tiles, bar values and percentages, tables, axis ticks, the chart readout, deltas, funnel counts, dates in date fields, the budget percentage. A title is never set in the sans.
 
 ## Layout
 
-A 12-column grid (`minmax(0, 1fr)` columns, 24px gutter) inside a 1440px page with 32px side margins and 64px bottom padding. Below 760px it becomes 4 columns with 16px gutters and margins; spans of 4 to 12 go full width and 3-spans become 2 of 4. Between 760px and 1080px, 4-spans widen to 6.
+A single top bar (parchment, 2px ink rule beneath) holds the wordmark, the site switcher, the site tabs (Overview, Realtime, Settings), the daily budget, the lantern theme switch and Account / Sign out. No sidebar: three tabs do not earn one.
 
-Spacing runs on an 8px rhythm with a 4px half-step: 4, 8, 12, 16, 24, 32, 48, 64. The page head opens with 48px above (32px on mobile); sections open with 32px.
+Content sits in a 1440px column padded `page-x` × `page-y` (40 × 36px; 16 × 24px below 760px), on a 12-column grid with 24px gutters (4 columns and 16px below 760px). Sections sit `section-gap` (32px) apart; overview chapters get an extra 12px above.
 
-The overview is composed on the grid: the site name at 5 or 7 columns, the range controls in the remainder, right-aligned (left-aligned on mobile); the four-figure band at 3 columns each; the chart across all 12; breakdowns in 6-column pairs and 4-column triples.
-
-### Named Rules
-
-**The Drawn Grid Rule.** The column grid is visible. A repeating 1px gradient in the column-rule color, sized to `(100% + gutter) / cols`, runs behind the figure band and the chart. Breakdown bars are 2px red rules on the row's bottom hairline, their length the share of the top row. This is the system's signature; apply it to any block whose figures or plotted values should read against the columns.
-
-**The Strong Opener Rule.** A block opens with a 1px ink rule (figure band, section header, sites list, login form) and its rows divide with 1px hairlines.
+- **Page head:** serif title and one context line on the left, actions on the right (they wrap under on phones).
+- **Overview:** filter chips, four stat tiles (two per row on phones), the chart panel, then chapters: Traffic (pages, referrers, link tags, countries), Audience (devices, browsers, OS in thirds), Behaviour and health (sections funnel full width, events, outbound, vitals, 404s, AI agents full width, capped at 8 rows with Show all). A footer holds About these numbers (65ch) and the keyboard hint.
+- **Range picker:** four presets plus Custom; the two date fields appear only for Custom. Keys 1 to 4 pick a preset.
+- **Settings:** a sticky section index on the left (200px) and one stacked column of cards (max 920px): Install, Site, Keys and sharing, Data, Delete site. Below 1080px the index becomes a row of pill links. After Add site, Install leads with a "Listening for the first visit" line.
+- **Realtime:** a Right now card (5/12) with the count, a Live stamp, "Updated Ns ago" and a trail of the readings taken while the tab is open; Active pages (7/12) beside it.
+- **Tap targets:** 40px with a fine pointer, 44px below 760px, including bar-list rows, segments, chips' remove buttons and the theme switch.
 
 ## Elevation & Depth
 
-Flat. There are no elevation shadows anywhere. Depth is a hierarchy of rules: the strong ink rule opens, the hairline divides, the column rule recedes behind. The only tonal step is paper-shade, used as a recessed well for code, keys, tracks and loading bars. The single box-shadow in the build is an inset 2px red line under a focused field, which reads as an underline, not a lift.
+Depth is drawn, not lit. Sketch surfaces carry a hard ink offset with no blur; nothing else has a shadow.
 
-### Named Rules
+### Shadow Vocabulary
 
-**The No Lift Rule.** Nothing floats. State is shown by inverting (ink fill, paper text), underlining in red, or changing the rule color, never by a drop shadow.
+- **Card** (`3px 4px 0` ink at 16% light, black at 45% dark): every card, tile, panel and site row.
+- **Button** (`2px 2px 0`): the primary button, the filled danger button and the confirmation slip.
+- **Lift** (`5px 7px 0`): a hovered site row (with `rotate(-0.6deg)`) and a hovered primary button (with a 1px nudge up-left). Pressing a primary button drops the shadow and moves it 2px into the page.
+
+**The Drawn Depth Rule.** A shadow is always a hard offset on a sketch surface. Never a blurred drop shadow, never on a flat control.
 
 ## Shapes
 
-Square. Every control, chip, field, segment, swatch and marker has 0 radius; the chart hover marker is a 7px square and the live pulse a 10px square. Lines are 1px hairlines, 2px for emphasis (current series, tab underline, bar rule, focus). Authored icons sit on a 16px grid with a 1.5 stroke and square caps. The fish mark is the one curved form, and it keeps a square red lantern.
+- **Sketch corners** on everything that is a surface: `sketch-card` for cards and site rows, `sketch-panel` (calmer) for the chart panel, `sketch-stat` (full wobble) for stat tiles, `sketch-btn` for primary, secondary and filled danger buttons. Always with the 2px ink border.
+- **Soft corners** elsewhere: inputs, quiet and outline-danger buttons, key boxes and code wells at 6.4px; segments 4.8px inside an 8px frame; chips 8px; stamps 2px; the budget meter a pill.
+- Icons are authored 16px line icons at 1.5 stroke with round caps, in the text colour. Empty states use hand-drawn doodles (a lantern, a fish) in 2px ink strokes with one navy accent stroke.
 
 ## Components
 
 ### Buttons
 
-Outlined in ink, inverting on hover.
+- **Primary** (navy, ink sketch border, button shadow): one per view: Add site, Save changes, Sign in, Create account, Change password.
+- **Secondary** (fog fill, ink sketch border): Create link, Download CSV.
+- **Quiet** (paper, 1.5px field-rule border, soft corners): Copy, Reveal, Cancel. Copy turns green with a tick and reads "Copied".
+- **Danger outline** (paper, danger border and text): the first press of Rotate key, Revoke all links, Delete data. **Danger solid** (danger fill, sketch border): the confirming press, Delete site, Delete account.
+- Disabled and busy: 55% opacity, no shadow, no pointer.
 
-- **Shape:** square (0), 36px tall, 16px side padding, 1px border, 14px icon with 8px gap.
+### Inline confirmation
 
-- **Default:** transparent with an ink border and ink text, 600 weight; hover fills ink with paper text.
+No native `confirm()` or `prompt()`. A destructive action arms on first press and opens a dashed danger box that says exactly what goes ("Every raw event and daily total for Field journal recorded before Sun, 2 Nov 2025 goes"), with the solid danger button and Cancel. Escape disarms. Deleting a site or an account is type-to-confirm with an inline error when the text does not match.
 
-- **Primary:** solid red fill and border with white text; hover steps to the darker solid red.
+### Cards / Containers
 
-- **Quiet:** hairline border instead of ink; used for copy actions.
+Section cards hold a serif title with optional label-style meta on the right. Cards in a row share a height. Cards never nest; inside a card, structure comes from dashed rules and spacing.
 
-- **Danger:** bad-colored border and text; hover fills bad with white text.
+### Stat tiles
 
-- **Disabled / Busy:** 50% opacity, not-allowed, no pointer events.
+Label caption, mono figure that rolls like an odometer, mono delta coloured by meaning (bounce rate counts lower as better).
 
-- **Motion:** background and color over 150ms on `cubic-bezier(0.16, 1, 0.3, 1)`.
+### Bar lists
 
-### Segmented control
+Every row with a filter is one 40/44px button: name, mono value, mono share, a navy share bar under it (scaled with `transform`), and a funnel mark that appears on hover and focus (faintly visible on touch screens). Hover fills the row with muted paper. The row's accessible name says "Filter by …".
 
-The range presets. A 1px ink outline around 34px buttons divided by hairlines; hover is paper-shade; the pressed preset inverts to ink with paper text.
+### Stamps and slips
 
-### Chips
-
-Active filters. An ink block with paper text, 30px tall, the dimension name at 70% paper and the value at full. A 24px square close target that turns red on hover.
+Stamps are mono uppercase words in a 1.5px border with a 7% tint of their own colour, rotated -1.5deg: Good / Needs work / Poor, Live, Next step, Listening / Counting, Busy / Near limit, a share link's expiry. A slip is a paper chip with a tick that confirms in the past tense: Saved, Password changed, Deleted data before ….
 
 ### Inputs / Fields
 
-- **Style:** paper fill, 1px hairline border with an ink-3 bottom edge, 0 radius, 40px tall, body size. Textareas are 88px, in Geist Mono at body-small.
-
-- **Hover:** border goes ink-3 all round.
-
-- **Focus:** border goes ink and a 2px red line appears inside the bottom edge; the default outline is suppressed here only.
-
-- **Error:** border in bad, with a message in bad below.
-
-- **Label:** label style above, 4px gap; hints in ink-3 at label size.
-
-- **Date and checkbox:** dates are 34px with a hairline border; checkboxes are 16px with a red accent.
+Paper fill, 1.5px field-rule border, 6.4px corners, ink on hover, navy on focus plus the navy ring. Labels use the label style; hints are ink-soft; invalid fields turn the border danger red with an error hint. Placeholders use ink soft.
 
 ### Navigation
 
-The black band: 52px, wordmark at 700 with the mark at 18px, a site switcher set off by a left rule, tabs at body-small 500 in band grey. Hover brings band ink; the current tab is band ink with a 2px red underline. The theme switch is a 40px lantern icon before Sign out: unlit outline in light, lit red in dark, half lit on system. Below 760px the wordmark keeps only its mark, the site switcher fills the first row, the tabs wrap to their own scrolling row at 44px under a band rule, and the usage meter hides.
+Top-bar tabs are ink-soft text; the current tab is navy with a 2px navy underline sitting on the bar's ink rule. A skip link ("Skip to content") is the first tab stop. `g` then `o`, `r` or `s` switches tabs.
 
-### Figure band
+### Chart
 
-Four figures on 3 columns each between a strong rule above and a hairline below, divided by vertical hairlines, over the drawn grid. Each is label, value and a delta ("+12% vs previous") in body-small 600: good when better, bad when worse, ink-3 when flat. On mobile they stack two by two, divided by horizontal hairlines.
+Views in navy (2.25px) with a 10% navy wash, visitors in ink (1.5px), the previous period dashed in ink soft. Y-axis labels sit in a 40px left gutter so no series runs under them; grid lines are dotted rule. Hover or arrow keys move a dashed hairline and a paper dot ringed in navy; the readout above shows the values in mono.
 
-### Bar list
+### Signature moment: the inked chart
 
-Ranked rows at least 34px tall: key (a button that filters the page), value at 600, percentage at label size in ink-3, right-aligned in 4ch. Each row's bottom hairline carries a 2px red rule sized to its share of the top row, easing its width over 250ms. "Show all" is a text button at label size.
+The first time the chart has data, the views line is drawn left to right like a pen stroke over 900ms, with a small paper nib riding the tip (one requestAnimationFrame loop moves the stroke and the nib together, then stops). The visitors line follows 260ms later, the wash and the previous period settle in. It runs once per visit to the page and only with `prefers-reduced-motion: no-preference`.
 
-### Line chart
+### Motion
 
-240px tall, full width, hand-drawn SVG. Views in red at 2px over the red wash; visitors in ink at 1.25px; the previous period in ink-3 dashed 4 4. Hairline ticks at half and full scale, a strong-rule baseline. Hover or arrow keys move a 1px ink hairline and a red square marker, and the legend row becomes a readout of the point.
-
-### Section
-
-A heading and optional meta set on a baseline over a strong rule, then content. Default span is 6 columns.
-
-### Tables
-
-Body-small cells, label-style headers in ink-2, 8px vertical padding, hairline row dividers, right-aligned tabular numeric columns, paths truncated at 28ch.
-
-### Status and loading
-
-Skeleton bars are paper-shade blocks pulsing to 50% over 1.4s. The realtime pulse is a 10px red square fading to 25% over 2s. All animation and transition stops under reduced motion. Focus is a 2px red outline offset 2px everywhere else.
+All motion lives inside `prefers-reduced-motion: no-preference`; with reduced motion the page is complete and still (reels on their digits, bars at length, cards in place). Cards rise in (420ms, `cubic-bezier(.22,1,.36,1)`, stagger capped at 160ms). Stamps land with a thunk and slips tilt in (`cubic-bezier(.34,1.56,.64,1)`, the one deliberate spring). Figures and the realtime count roll like an odometer. Share bars grow with `scaleX`. Feedback transitions are 150ms. The live dot's pulse and skeletons are the only loops.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** place everything on the 12-column grid and draw the columns behind figures and charts.
-
-- **Do** open each block with a 1px ink rule and divide its rows with 1px hairlines.
-
-- **Do** keep red for the current series, the selection, focus and the primary action.
-
-- **Do** show the previous period in ink-3, dashed 4 4.
-
-- **Do** set every comparable number in tabular figures.
-
-- **Do** show state by inversion (ink fill, paper text) or a 2px red underline.
-
-- **Do** keep state transitions at 150ms on the house ease; 250ms is reserved for bar lengths.
+- **Do** give each view one navy primary button.
+- **Do** set every number in Geist Mono and every title in Source Serif 4.
+- **Do** draw edges that carry meaning with the 2px ink sketch border; use the rule colour only for dashed dividers.
+- **Do** say what a destructive action will remove, inline, before it happens.
+- **Do** check new text pairs at 4.5:1 (3:1 for borders, focus and 24px+ text) in both themes.
+- **Do** keep every animation inside `prefers-reduced-motion: no-preference` and move it with `transform` or `opacity`.
 
 ### Don't:
 
-- **Don't** round corners on controls, chips, fields or markers.
-
-- **Don't** use drop shadows or lifted cards; the only shadow is the inset focus underline.
-
-- **Don't** put content in bordered or filled tiles; paper-shade is for recessed wells (code, keys, tracks, skeletons) only.
-
-- **Don't** introduce a second accent hue or color the previous period.
-
-- **Don't** set labels in uppercase or add eyebrow text above headings.
-
-- **Don't** use Geist Mono for prose or numbers; it is for code, keys and ids.
+- **Don't** use red, amber or green for decoration, branding or emphasis.
+- **Don't** use a blurred shadow, or a shadow on anything that is not a sketch surface.
+- **Don't** bring back the Swiss timetable: no black band, no ruled column grid, no square-cornered red buttons.
+- **Don't** nest cards, or put a native `confirm()` / `prompt()` in front of a destructive action.
+- **Don't** use emoji, or a Mailrust name, tab colour or sidebar in Lanternfish.
+- **Don't** animate `width` or `height` for bars and meters.
