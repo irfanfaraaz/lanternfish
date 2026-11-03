@@ -1,9 +1,9 @@
 import { env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
-import { runCron } from "../../src/worker/cron";
+import { rotate, runCron } from "../../src/worker/cron";
 import type { EventRow } from "../../src/worker/events";
 import { computeDay, percentile, rollupDay } from "../../src/worker/rollup";
-import { insertEvents, makeSite, reset, seedSite } from "./helpers";
+import { insertEvents, makeSite, reset, seedAccount, seedSite } from "./helpers";
 import { generateDay } from "./synthetic";
 
 const base: EventRow = { site_id: "abc123", ts: 0, day: "2026-05-01", name: "pageview", path: "/", pl: "L1", visitor: "v1", ref: null, tag: null, country: "IN", city: null, device: "desktop", browser: "Chrome", os: "macOS", props: null };
@@ -92,6 +92,30 @@ describe("rollupDay and cron", () => {
     expect(done).toContain("akl 2026-01-15");
     expect(done).not.toContain("akl 2026-01-16");
     expect(metric(await daily("akl", "2026-01-15"), "views")).toBe(1);
+  });
+
+  it("cron rolls up sites of every account, not only account 1", async () => {
+    const other = await seedAccount("other@example.com", "a-long-password-1");
+    await seedSite({ id: "acct2", account_id: other, timezone: "UTC" });
+    const now = Date.parse("2026-01-15T00:10:00Z");
+    await insertEvents([ev({ site_id: "acct2", day: "2026-01-14" })]);
+    await runCron(env, now);
+    expect(metric(await daily("acct2", "2026-01-14"), "views")).toBe(1);
+  });
+
+  it("rotate starts at n mod length", () => {
+    expect(rotate([1, 2, 3, 4], 5)).toEqual([2, 3, 4, 1]);
+    expect(rotate([], 3)).toEqual([]);
+  });
+
+  it("a small CRON_QUERY_BUDGET serves different sites first in consecutive hours", async () => {
+    for (const id of ["s1", "s2", "s3", "s4"]) await seedSite({ id, timezone: "UTC" });
+    const now = Date.parse("2026-01-15T00:10:00Z");
+    const small = { ...env, CRON_QUERY_BUDGET: "10", RETENTION_DAYS: "0" };
+    await runCron(small, now);
+    await runCron(small, now + 3_600_000);
+    const { results } = await env.DB.prepare("SELECT DISTINCT site_id FROM rollups WHERE day = '2026-01-14'").all<{ site_id: string }>();
+    expect(results.length).toBe(2);
   });
 
   it("cron prunes raw events past retention and counts its writes", async () => {
