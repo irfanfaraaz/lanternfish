@@ -116,6 +116,8 @@ export interface Usage {
   rows_read: number;
   budget: number;
   read_budget: number;
+  /** "account": the signed-in account's numbers against its limits (cloud). "install": the whole install (self). */
+  scope: "account" | "install";
 }
 
 /** GET /api/me: who is signed in and what this install allows. */

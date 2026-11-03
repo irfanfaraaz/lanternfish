@@ -29,6 +29,7 @@ export async function todayUsage(db: D1Database, env: Budgets, nowMs: number): P
     rows_read: row?.rows_read ?? 0,
     budget: budget(env),
     read_budget: readBudget(env),
+    scope: "install",
   };
 }
 

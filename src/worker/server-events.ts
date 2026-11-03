@@ -2,10 +2,12 @@ import { detectBot } from "../shared/bots";
 import { MAX_BODY, MAX_STR } from "../shared/constants";
 import type { Props, ServerEventBody } from "../shared/types";
 import { cleanProps, cutPath, validName, validNamedProps } from "../shared/validate";
+import { isCloud } from "./config";
 import type { Env } from "./env";
 import { WRITES_PER_EVENT, insertEventStmt, readCapped } from "./events";
 import { getSalt, timingSafeEqual, visitorHash } from "./hash";
 import { isExcluded, overBudget } from "./ingest";
+import { accountOverEvents, accountUsageStmt } from "./limits";
 import { getSite } from "./sites";
 import { localDay, utcDay } from "./time";
 import { parseUA } from "./ua";
@@ -48,6 +50,9 @@ export async function serverEvent(req: Request, text: string, env: Env, nowMs: n
   const path = typeof props.path === "string" ? cutPath(props.path) : body.path ? cutPath(body.path) : null;
   if (path && isExcluded(site, path)) return;
   if (await overBudget(env, nowMs)) return;
+  // Cloud only: self mode skips this read so server events cost what they always have.
+  const cloud = isCloud(env);
+  if (cloud && (await accountOverEvents(env, site.account_id, nowMs))) return;
 
   // Agents are not people, so they get no visitor hash. Other server events
   // may pass ip + ua to count against the same daily visitor as the browser.
@@ -56,7 +61,9 @@ export async function serverEvent(req: Request, text: string, env: Env, nowMs: n
     visitor = await visitorHash(await getSalt(env.DB, utcDay(nowMs)), site.id, body.ip, body.ua);
   }
   const parsed = ua ? parseUA(ua) : null;
-  await env.DB.batch([
+  const today = utcDay(nowMs);
+  const written = WRITES_PER_EVENT + 1;
+  const stmts = [
     insertEventStmt(env.DB, {
       site_id: site.id,
       ts: nowMs,
@@ -74,8 +81,10 @@ export async function serverEvent(req: Request, text: string, env: Env, nowMs: n
       os: parsed?.os ?? null,
       props: Object.keys(props).length > 0 ? JSON.stringify(props) : null,
     }),
-    usageStmt(env.DB, utcDay(nowMs), 1, 1, WRITES_PER_EVENT + 1),
-  ]);
+    usageStmt(env.DB, today, 1, 1, cloud ? written + 1 : written),
+  ];
+  if (cloud) stmts.push(accountUsageStmt(env.DB, site.account_id, today, 1, written, 0));
+  await env.DB.batch(stmts);
 }
 
 export async function handleServerEvent(req: Request, env: Env, ctx: { waitUntil(p: Promise<unknown>): void }): Promise<Response> {
