@@ -1,9 +1,9 @@
 import { env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
-import { resetLoginFailures, verifySession } from "../../src/worker/auth";
+import { issueSession, readSession, resetLoginFailures } from "../../src/worker/auth";
 import { hmacB64url } from "../../src/worker/hash";
 import { makeShareToken } from "../../src/worker/share";
-import { apiCall, call, login, makeSite, reset, seedSite } from "./helpers";
+import { TEST_SECRET, apiCall, call, login, makeSite, reset, seedSite, sessionFor } from "./helpers";
 
 const loginReq = (password: string, ip: string) =>
   new Request("https://lf.test/api/login", {
@@ -45,11 +45,45 @@ describe("auth", () => {
     expect((await apiCall(`${cookie}x`, "GET", "/sites")).status).toBe(401);
   });
 
+  it("login issues an account 1 session carrying its session_gen", async () => {
+    await env.DB.prepare("UPDATE accounts SET session_gen = 3 WHERE id = 1").run();
+    const cookie = await login("10.0.0.8");
+    const token = cookie.slice("lf_session=".length);
+    expect(token.split(".")).toHaveLength(4);
+    expect(await readSession(token, TEST_SECRET, Math.floor(Date.now() / 1000))).toEqual({ accountId: 1, gen: 3 });
+    expect((await apiCall(cookie, "GET", "/sites")).status).toBe(200);
+  });
+
   it("expired cookie → 401", async () => {
-    const exp = Math.floor(Date.now() / 1000) - 10;
-    const token = `${exp}.${await hmacB64url("test-secret-0123456789", `session:${exp}`)}`;
-    expect(await verifySession(token, "test-secret-0123456789", Math.floor(Date.now() / 1000))).toBe(false);
+    const now = Math.floor(Date.now() / 1000);
+    const token = await issueSession(TEST_SECRET, 1, 0, now - 31 * 86_400);
+    expect(await readSession(token, TEST_SECRET, now)).toBeNull();
     expect((await apiCall(`lf_session=${token}`, "GET", "/sites")).status).toBe(401);
+  });
+
+  it("legacy exp.sig cookie → 401", async () => {
+    const exp = Math.floor(Date.now() / 1000) + 86_400;
+    const token = `${exp}.${await hmacB64url(TEST_SECRET, `session:${exp}`)}`;
+    expect(await readSession(token, TEST_SECRET, Math.floor(Date.now() / 1000))).toBeNull();
+    expect((await apiCall(`lf_session=${token}`, "GET", "/sites")).status).toBe(401);
+  });
+
+  it("session from an older session_gen → 401", async () => {
+    const cookie = await sessionFor(1);
+    expect((await apiCall(cookie, "GET", "/sites")).status).toBe(200);
+    await env.DB.prepare("UPDATE accounts SET session_gen = 1 WHERE id = 1").run();
+    expect((await apiCall(cookie, "GET", "/sites")).status).toBe(401);
+  });
+
+  it("session for a missing account → 401", async () => {
+    const token = await issueSession(TEST_SECRET, 99, 0, Math.floor(Date.now() / 1000));
+    expect((await apiCall(`lf_session=${token}`, "GET", "/sites")).status).toBe(401);
+  });
+
+  it("session signed for one account cannot be relabelled as another", async () => {
+    const token = await issueSession(TEST_SECRET, 1, 0, Math.floor(Date.now() / 1000));
+    const forged = `2${token.slice(1)}`;
+    expect(await readSession(forged, TEST_SECRET, Math.floor(Date.now() / 1000))).toBeNull();
   });
 
   it("6th failed login from one IP → 429", async () => {

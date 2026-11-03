@@ -1,5 +1,7 @@
 import { createExecutionContext, env, waitOnExecutionContext } from "cloudflare:test";
 import type { Site } from "../../src/shared/types";
+import { hashPassword, issueSession } from "../../src/worker/auth";
+import type { Env } from "../../src/worker/env";
 import { type EventRow, insertEventsStmt } from "../../src/worker/events";
 import { clearSaltCache } from "../../src/worker/hash";
 import worker from "../../src/worker/index";
@@ -7,6 +9,7 @@ import { resetRateLimits } from "../../src/worker/ratelimit";
 import { clearSiteCache, insertSiteStmt } from "../../src/worker/sites";
 
 export const SERVER_KEY = "S".repeat(32);
+export const TEST_SECRET = "test-secret-0123456789";
 
 export function makeSite(over: Partial<Site> = {}): Site {
   return {
@@ -25,9 +28,13 @@ export function makeSite(over: Partial<Site> = {}): Site {
   };
 }
 
-/** Empties every data table and in-isolate cache. */
+/** Empties every data table and in-isolate cache, leaving only account 1 (session_gen 0). */
 export async function reset() {
-  await env.DB.batch(["events", "daily", "salts", "usage", "rollups", "sites"].map((t) => env.DB.prepare(`DELETE FROM ${t}`)));
+  await env.DB.batch([
+    ...["events", "daily", "salts", "usage", "rollups", "sites", "account_usage"].map((t) => env.DB.prepare(`DELETE FROM ${t}`)),
+    env.DB.prepare("DELETE FROM accounts WHERE id <> 1"),
+    env.DB.prepare("UPDATE accounts SET session_gen = 0 WHERE id = 1"),
+  ]);
   clearSiteCache();
   clearSaltCache();
   resetRateLimits();
@@ -39,10 +46,25 @@ export async function seedSite(over: Partial<Site> = {}): Promise<Site> {
   return s;
 }
 
-/** Calls the Worker and waits for its background work to finish. */
-export async function call(req: Request): Promise<Response> {
+/** Adds an account with an email and password; returns its id. */
+export async function seedAccount(email: string, password: string): Promise<number> {
+  const row = await env.DB.prepare("INSERT INTO accounts (email, password_hash, created) VALUES (?, ?, unixepoch()) RETURNING id")
+    .bind(email, await hashPassword(password))
+    .first<{ id: number }>();
+  return row!.id;
+}
+
+/** A session cookie (`lf_session=...`) for the account at its current session_gen. */
+export async function sessionFor(accountId: number): Promise<string> {
+  const row = await env.DB.prepare("SELECT session_gen FROM accounts WHERE id = ?").bind(accountId).first<{ session_gen: number }>();
+  if (!row) throw new Error(`no account ${accountId}`);
+  return `lf_session=${await issueSession(TEST_SECRET, accountId, row.session_gen, Math.floor(Date.now() / 1000))}`;
+}
+
+/** Calls the Worker and waits for its background work to finish. `envOver` is merged onto the test env. */
+export async function call(req: Request, envOver: Partial<Env> = {}): Promise<Response> {
   const ctx = createExecutionContext();
-  const res = await worker.fetch(req, env, ctx);
+  const res = await worker.fetch(req, { ...env, ...envOver }, ctx);
   await waitOnExecutionContext(ctx);
   return res;
 }
@@ -84,12 +106,13 @@ export async function login(ip = "198.51.100.200"): Promise<string> {
 }
 
 /** Calls /api with the session cookie. */
-export function apiCall(cookie: string, method: string, path: string, body?: unknown): Promise<Response> {
+export function apiCall(cookie: string, method: string, path: string, body?: unknown, envOver?: Partial<Env>): Promise<Response> {
   return call(
     new Request(`https://lf.test/api${path}`, {
       method,
       headers: { cookie, ...(body !== undefined ? { "content-type": "application/json" } : {}) },
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     }),
+    envOver,
   );
 }

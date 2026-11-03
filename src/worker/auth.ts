@@ -33,27 +33,42 @@ export async function verifyPassword(pw: string, stored: string): Promise<boolea
   return timingSafeEqual(b64url(await pbkdf2(pw, fromB64url(salt), n)), hash);
 }
 
-export async function issueSession(secret: string, nowSec: number): Promise<string> {
+export async function issueSession(secret: string, accountId: number, gen: number, nowSec: number): Promise<string> {
   const exp = nowSec + SESSION_DAYS * 86_400;
-  return `${exp}.${await hmacB64url(secret, `session:${exp}`)}`;
+  return `${accountId}.${gen}.${exp}.${await hmacB64url(secret, `session:${accountId}:${gen}:${exp}`)}`;
 }
 
-export async function verifySession(token: string | undefined, secret: string, nowSec: number): Promise<boolean> {
-  if (!token) return false;
-  const [exp, sig] = token.split(".");
-  const n = Number(exp);
-  if (!sig || !Number.isInteger(n) || n < nowSec) return false;
-  return timingSafeEqual(sig, await hmacB64url(secret, `session:${n}`));
+/** The account and generation a valid, unexpired session names; null otherwise (including old `exp.sig` tokens). */
+export async function readSession(token: string | undefined, secret: string, nowSec: number): Promise<{ accountId: number; gen: number } | null> {
+  if (!token) return null;
+  const parts = token.split(".");
+  if (parts.length !== 4) return null;
+  const [id, g, e, sig] = parts as [string, string, string, string];
+  const accountId = Number(id);
+  const gen = Number(g);
+  const exp = Number(e);
+  if (!sig || !/^\d+$/.test(id) || !/^\d+$/.test(g) || !/^\d+$/.test(e)) return null;
+  if (!Number.isSafeInteger(accountId) || accountId < 1 || !Number.isSafeInteger(gen) || !Number.isSafeInteger(exp) || exp < nowSec) return null;
+  if (!timingSafeEqual(sig, await hmacB64url(secret, `session:${accountId}:${gen}:${exp}`))) return null;
+  return { accountId, gen };
 }
 
-export type AuthVars = { owner: boolean; shareSite: string | null };
+export type AuthVars = { owner: boolean; accountId: number | null; shareSite: string | null };
 export type ApiEnv = { Bindings: Env; Variables: AuthVars };
 
 // Read-only routes a share link may reach, for its own site only.
 const SHARE_ROUTE = /^\/api\/sites\/([^/]+)(?:\/(?:stats|realtime))?$/;
 const PUBLIC_API = new Set(["/api/login", "/api/health"]);
 
-/** Sets c.var.owner / c.var.shareSite and blocks anything the caller may not reach. */
+/** The account a request's session cookie signs in, if the session is still current. */
+async function sessionAccount(c: Context<ApiEnv>, nowSec: number): Promise<number | null> {
+  const s = await readSession(getCookie(c, SESSION_COOKIE), c.env.SESSION_SECRET, nowSec);
+  if (!s) return null;
+  const row = await c.env.DB.prepare("SELECT session_gen FROM accounts WHERE id = ?").bind(s.accountId).first<{ session_gen: number }>();
+  return row && row.session_gen === s.gen ? s.accountId : null;
+}
+
+/** Sets c.var.owner / c.var.accountId / c.var.shareSite and blocks anything the caller may not reach. */
 export const authenticate: MiddlewareHandler<ApiEnv> = async (c, next) => {
   const path = c.req.path;
   const method = c.req.method;
@@ -64,10 +79,11 @@ export const authenticate: MiddlewareHandler<ApiEnv> = async (c, next) => {
   if (PUBLIC_API.has(path)) return next();
 
   const nowSec = Math.floor(Date.now() / 1000);
-  const owner = await verifySession(getCookie(c, SESSION_COOKIE), c.env.SESSION_SECRET, nowSec);
-  c.set("owner", owner);
+  const accountId = await sessionAccount(c, nowSec);
+  c.set("owner", accountId !== null);
+  c.set("accountId", accountId);
   c.set("shareSite", null);
-  if (owner) return next();
+  if (accountId !== null) return next();
 
   const auth = c.req.header("authorization") ?? "";
   if (auth.startsWith("Share ") && method === "GET") {
@@ -89,6 +105,9 @@ export function resetLoginFailures() {
   failures.clear();
 }
 
+/** The self-hosted owner's account. */
+const OWNER_ACCOUNT = 1;
+
 export async function login(c: Context<ApiEnv>) {
   const ip = c.req.header("cf-connecting-ip") ?? "local";
   const now = Date.now();
@@ -104,14 +123,21 @@ export async function login(c: Context<ApiEnv>) {
     return c.json({ error: "Wrong password" }, 401);
   }
   failures.delete(ip);
-  setCookie(c, SESSION_COOKIE, await issueSession(c.env.SESSION_SECRET, Math.floor(now / 1000)), {
+  const row = await c.env.DB.prepare("SELECT session_gen FROM accounts WHERE id = ?").bind(OWNER_ACCOUNT).first<{ session_gen: number }>();
+  if (!row) return c.json({ error: "Wrong password" }, 401);
+  await setSessionCookie(c, OWNER_ACCOUNT, row.session_gen);
+  return c.body(null, 204);
+}
+
+/** Signs the caller in as `accountId` at session generation `gen`. */
+export async function setSessionCookie(c: Context<ApiEnv>, accountId: number, gen: number): Promise<void> {
+  setCookie(c, SESSION_COOKIE, await issueSession(c.env.SESSION_SECRET, accountId, gen, Math.floor(Date.now() / 1000)), {
     httpOnly: true,
     secure: true,
     sameSite: "Strict",
     path: "/",
     maxAge: SESSION_DAYS * 86_400,
   });
-  return c.body(null, 204);
 }
 
 export function logout(c: Context<ApiEnv>) {

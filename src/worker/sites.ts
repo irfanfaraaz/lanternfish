@@ -83,6 +83,18 @@ export async function listSites(db: D1Database, accountId: number): Promise<Site
   return results.map(rowToSite);
 }
 
+/** Every site on the install, for the cron. */
+export async function listAllSites(db: D1Database): Promise<Site[]> {
+  const { results } = await db.prepare("SELECT * FROM sites ORDER BY created, id").all<SiteRow>();
+  return results.map(rowToSite);
+}
+
+/** The site, only if `accountId` owns it. Uncached, so ownership is always current. */
+export async function ownedSite(db: D1Database, id: string, accountId: number): Promise<Site | null> {
+  const row = await db.prepare("SELECT * FROM sites WHERE id = ? AND account_id = ?").bind(id, accountId).first<SiteRow>();
+  return row ? rowToSite(row) : null;
+}
+
 export function insertSiteStmt(db: D1Database, s: Site): D1PreparedStatement {
   const r = siteToRow(s);
   return db

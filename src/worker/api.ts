@@ -7,13 +7,10 @@ import { MAX_EXPORT_ROWS, exportCsv } from "./csv";
 import { randomId } from "./hash";
 import { getRealtime } from "./realtime";
 import { makeShareToken } from "./share";
-import { invalidateSite, insertSiteStmt, listSites, rowToSite, type SiteRow, updateSiteStmt } from "./sites";
+import { getSite, invalidateSite, insertSiteStmt, listSites, ownedSite, updateSiteStmt } from "./sites";
 import { getStats, siteSummaries } from "./stats";
 import { addDays, isDay, localDay, utcDay, validTimezone } from "./time";
 import { Meter, readBudget, recordMeter, todayUsage, usageStmt } from "./usage";
-
-/** Version one has a single account. */
-export const ACCOUNT_ID = 1;
 
 export const api = new Hono<ApiEnv>();
 api.use("*", authenticate);
@@ -50,20 +47,29 @@ export function parseSiteInput(body: Fields, base?: SiteInput): SiteInput | stri
   return { name: name.trim(), domains: [...new Set(domains)], timezone, exclude_paths: exclude, funnel, public: pub };
 }
 
-export async function ownedSite(db: D1Database, id: string): Promise<Site | null> {
-  const row = await db.prepare("SELECT * FROM sites WHERE id = ? AND account_id = ?").bind(id, ACCOUNT_ID).first<SiteRow>();
-  return row ? rowToSite(row) : null;
-}
-
 /** What a share-link viewer may see of a site. */
 const publicView = (s: Site): Site => ({ ...s, server_key: "", share_nonce: "" });
 
+/**
+ * The site named by the route: one the signed-in account owns, or the site a
+ * share link was granted (already matched to the route by `authenticate`).
+ */
+async function siteFor(c: Context<ApiEnv>): Promise<Site | null> {
+  const id = c.req.param("id") ?? "";
+  const accountId = c.get("accountId");
+  if (accountId !== null) return ownedSite(c.env.DB, id, accountId);
+  const shared = c.get("shareSite");
+  return shared !== null && shared === id ? getSite(c.env.DB, shared) : null;
+}
+
 async function siteOr404(c: Context<ApiEnv>): Promise<Site | Response> {
-  const site = await ownedSite(c.env.DB, c.req.param("id") ?? "");
-  return site ?? c.json({ error: "No such site" }, 404);
+  return (await siteFor(c)) ?? c.json({ error: "No such site" }, 404);
 }
 
 const ownerOnly = (c: Context<ApiEnv>) => (c.get("owner") ? null : c.json({ error: "Owner only" }, 403));
+
+/** The signed-in account, after `ownerOnly` has passed. 0 matches no account, so a slip fails closed. */
+const accountOf = (c: Context<ApiEnv>): number => c.get("accountId") ?? 0;
 
 /**
  * D1's free plan allows 5 million rows read a day, shared with ingest. Past
@@ -93,7 +99,7 @@ api.get("/sites", async (c) => {
   if (guard) return guard;
   const now = Date.now();
   const meter = new Meter();
-  const sites = await listSites(c.env.DB, ACCOUNT_ID);
+  const sites = await listSites(c.env.DB, accountOf(c));
   const series = await siteSummaries(c.env.DB, sites, 30, now, meter);
   const out: SiteSummary[] = sites.map((site) => {
     const s = series.get(site.id) ?? { views: [], uniques: [] };
@@ -108,7 +114,7 @@ api.get("/sites", async (c) => {
 api.get("/sites/list", async (c) => {
   const denied = ownerOnly(c);
   if (denied) return denied;
-  const { results } = await c.env.DB.prepare("SELECT id, name FROM sites WHERE account_id = ? ORDER BY name").bind(ACCOUNT_ID).all<{ id: string; name: string }>();
+  const { results } = await c.env.DB.prepare("SELECT id, name FROM sites WHERE account_id = ? ORDER BY name").bind(accountOf(c)).all<{ id: string; name: string }>();
   return c.json(results);
 });
 
@@ -120,7 +126,7 @@ api.post("/sites", async (c) => {
   const site: Site = {
     ...input,
     id: randomId(8),
-    account_id: ACCOUNT_ID,
+    account_id: accountOf(c),
     server_key: randomId(32),
     share_nonce: randomId(12),
     created: Math.floor(Date.now() / 1000),
@@ -154,7 +160,7 @@ api.delete("/sites/:id", async (c) => {
   const site = await siteOr404(c);
   if (site instanceof Response) return site;
   const db = c.env.DB;
-  const res = await db.batch(["events", "daily", "rollups"].map((t) => db.prepare(`DELETE FROM ${t} WHERE site_id = ?`).bind(site.id)).concat(db.prepare("DELETE FROM sites WHERE id = ?").bind(site.id)));
+  const res = await db.batch(["events", "daily", "rollups"].map((t) => db.prepare(`DELETE FROM ${t} WHERE site_id = ?`).bind(site.id)).concat(db.prepare("DELETE FROM sites WHERE id = ? AND account_id = ?").bind(site.id, accountOf(c))));
   invalidateSite(site.id);
   await countWrites(c, res);
   return c.body(null, 204);
