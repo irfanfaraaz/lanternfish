@@ -10,6 +10,13 @@ A lanternfish is a deep-sea fish that makes its own light.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/irfanfaraaz/lanternfish)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/dashboard-dark.png">
+  <img src="docs/media/dashboard-light.png" alt="The Lanternfish overview for one site: views, visitors, median time on page and bounce rate compared with the previous period, a seven-day chart, and the top pages and referrers.">
+</picture>
+
+<sub>The site overview, shown with demo data from the test suite's traffic generator.</sub>
+
 **Contents:** [What it tells you](#what-it-tells-you) · [Privacy](#privacy) · [Deploy](#deploy) · [Add a site](#add-a-site) · [Next.js](#nextjs) · [AI agents](#ai-agents-and-crawlers) · [Free-tier budget](#free-tier-budget) · [Configuration](#configuration) · [Hosted mode](#hosted-mode) · [Development](#development)
 
 ## What it tells you
